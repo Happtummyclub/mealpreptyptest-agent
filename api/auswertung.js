@@ -17,8 +17,8 @@ function findField(fields, label) {
 }
 
 function extractOpenAIText(openaiResult) {
-  if (openaiResult?.output_text) {
-    return openaiResult.output_text;
+  if (typeof openaiResult?.output_text === "string" && openaiResult.output_text.trim()) {
+    return openaiResult.output_text.trim();
   }
 
   if (Array.isArray(openaiResult?.output)) {
@@ -27,7 +27,7 @@ function extractOpenAIText(openaiResult) {
         if (item.type === "message" && Array.isArray(item.content)) {
           return item.content
             .filter((contentItem) => contentItem.type === "output_text")
-            .map((contentItem) => contentItem.text)
+            .map((contentItem) => contentItem.text || "")
             .join("\n");
         }
         return "";
@@ -35,12 +35,15 @@ function extractOpenAIText(openaiResult) {
       .join("\n")
       .trim();
 
-    if (text) {
-      return text;
-    }
+    if (text) return text;
   }
 
   return null;
+}
+
+function truncate(str, max = 1200) {
+  if (!str) return "";
+  return str.length > max ? str.slice(0, max) + "…" : str;
 }
 
 export default async function handler(req, res) {
@@ -63,43 +66,33 @@ export default async function handler(req, res) {
       alltagsdynamik: getSelectedOptionText(
         findField(fields, "Wie planbar ist deine typische Woche?")
       ),
-
       mental_load: getSelectedOptionText(
         findField(fields, "Wie viel musst du im Alltag rund ums Essen mitdenken und organisieren?")
       ),
-
       motivation: getSelectedOptionText(
         findField(fields, "Wenn du nach einem langen Tag hungrig wirst: Wie viel Motivation hast du noch zu kochen?")
       ),
-
       zeit: getSelectedOptionText(
         findField(fields, "Wie viel Zeit hast du im Alltag für die Zubereitung deiner Mahlzeiten?")
       ),
-
       ernaehrungsorientierung: getSelectedOptionText(
         findField(fields, "Welche Rolle spielt Ernährung für dein Wohlbefinden im Alltag?")
       ),
-
       kochverhalten: getSelectedOptionText(
         findField(fields, "Wie sieht Kochen in deinem Alltag aktuell am ehesten aus?")
       ),
-
       abwechslungsbedarf: getSelectedOptionText(
         findField(fields, "Wie wichtig ist dir Abwechslung bei deinen Mahlzeiten?")
       ),
-
       planaenderungen: getSelectedOptionText(
         findField(fields, "Wenn sich dein Tag spontan verändert: Wie organisierst du dich neu?")
       ),
-
       einkauf: getSelectedOptionText(
         findField(fields, "Wie flexibel kannst du im Alltag einkaufen?")
       ),
-
       kuehlschrank: getSelectedOptionText(
         findField(fields, "Wie viel Platz hast du im Kühlschrank für vorbereitete Mahlzeiten?")
       ),
-
       gefrierschrank: getSelectedOptionText(
         findField(fields, "Wie viel Platz hast du im Gefrierfach oder Tiefkühler?")
       )
@@ -148,7 +141,6 @@ Länge:
 ca. 300–500 Wörter.
 `;
 
-    // Anfrage an OpenAI
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -163,14 +155,27 @@ ca. 300–500 Wörter.
 
     const openaiResult = await openaiResponse.json();
 
-    const auswertung =
-      extractOpenAIText(openaiResult) ||
-      "Deine Auswertung konnte leider nicht erstellt werden.";
+    let auswertung = extractOpenAIText(openaiResult);
 
-    // E-Mail-Inhalt
+    if (!openaiResponse.ok || !auswertung) {
+      const debugInfo = {
+        http_status: openaiResponse.status,
+        response_status: openaiResult?.status || null,
+        error: openaiResult?.error || null,
+        model: openaiResult?.model || null,
+        has_output_text: !!openaiResult?.output_text,
+        output_count: Array.isArray(openaiResult?.output) ? openaiResult.output.length : 0,
+        raw_preview: truncate(JSON.stringify(openaiResult))
+      };
+
+      auswertung =
+        "Deine Auswertung konnte leider nicht erstellt werden.\n\n" +
+        "Debug-Info:\n" +
+        JSON.stringify(debugInfo, null, 2);
+    }
+
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
-        
         <p>Hi ${parsed.vorname || "du"},</p>
 
         <p>
@@ -205,11 +210,9 @@ ca. 300–500 Wörter.
           Liebe Grüße,<br>
           Samia vom Happy Tummy Club
         </p>
-
       </div>
     `;
 
-    // Versand über Brevo
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -242,9 +245,7 @@ ca. 300–500 Wörter.
       emailSent: brevoResponse.ok,
       brevoResult
     });
-
   } catch (error) {
-    console.error("ERROR:", error);
     return res.status(500).json({
       success: false,
       error: error.message
