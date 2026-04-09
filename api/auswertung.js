@@ -23,7 +23,7 @@ function findField(fields, label) {
 }
 
 async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
-  const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
       "api-key": process.env.BREVO_API_KEY,
@@ -46,15 +46,10 @@ async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
     }),
   });
 
-  const brevoResult = await brevoResponse.json().catch(() => ({}));
-
-  if (!brevoResponse.ok) {
-    throw new Error(
-      `Brevo error ${brevoResponse.status}: ${JSON.stringify(brevoResult)}`
-    );
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Brevo error: ${errorText}`);
   }
-
-  return brevoResult;
 }
 
 export default async function handler(req, res) {
@@ -111,22 +106,19 @@ export default async function handler(req, res) {
 
     console.log("Webhook empfangen für:", parsed.email);
 
-    // 1) Sofortige Bestätigungsmail
+    // 📧 Bestätigungsmail – exakt dein Text
     const confirmationHtml = `
-      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222;">
+      <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #222;">
         <p>Hi ${parsed.vorname || "du"},</p>
 
         <p>
-          danke für deine Teilnahme am Meal Prep Typ Test.
-        </p>
-
-        <p>
+          Schön, dass du dir die Zeit für den Test genommen hast. Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
           Deine persönliche Auswertung wird gerade erstellt und erreicht dich in Kürze per E-Mail.
         </p>
 
         <p>
           Liebe Grüße<br>
-          <strong>Samia vom Happy Tummy Club</strong>
+          Samia vom Happy Tummy Club
         </p>
       </div>
     `;
@@ -140,27 +132,16 @@ export default async function handler(req, res) {
 
     console.log("Bestätigungsmail gesendet an:", parsed.email);
 
-    // 2) Zweiten Endpoint anstoßen
-    const triggerResponse = await fetch(
-      `${process.env.APP_BASE_URL}/api/process-result`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-internal-secret": process.env.INTERNAL_API_SECRET,
-        },
-        body: JSON.stringify({ parsed }),
-      }
-    );
-
-    const triggerText = await triggerResponse.text().catch(() => "");
-
-    console.log("process-result angestoßen:", {
-      status: triggerResponse.status,
-      body: triggerText,
+    // 🔄 Zweiten Endpoint aufrufen
+    await fetch(`${process.env.APP_BASE_URL}/api/process-result`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": process.env.INTERNAL_API_SECRET,
+      },
+      body: JSON.stringify({ parsed }),
     });
 
-    // 3) Schnell an Tally antworten
     return res.status(200).json({
       success: true,
       message: "Webhook erfolgreich empfangen.",
