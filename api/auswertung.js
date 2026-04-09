@@ -125,7 +125,7 @@ ca. 300–500 Wörter
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -134,12 +134,59 @@ ca. 300–500 Wörter
       })
     });
 
-    const result = await openaiResponse.json();
+    const openaiResult = await openaiResponse.json();
+    const auswertung =
+      openaiResult.output_text || "Deine Auswertung konnte leider nicht erstellt werden.";
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+        <p>Hi ${parsed.vorname || "du"},</p>
+
+        <p>danke dir, dass du dir die Zeit für den Test genommen hast.</p>
+
+        <p>Hier ist dein persönliches Ergebnis:</p>
+
+        <div style="white-space: pre-line;">${auswertung}</div>
+
+        <p style="margin-top: 24px;">
+          Liebe Grüße<br>
+          Samia<br>
+          Happy Tummy Club
+        </p>
+      </div>
+    `;
+
+    const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Happy Tummy Club",
+          email: "mail@happytummyclub.de"
+        },
+        to: [
+          {
+            email: parsed.email,
+            name: `${parsed.vorname} ${parsed.nachname}`.trim()
+          }
+        ],
+        subject: "Dein persönlicher Meal Prep Typ",
+        htmlContent: emailHtml
+      })
+    });
+
+    const brevoResult = await brevoResponse.json();
 
     return res.status(200).json({
       success: true,
       parsed,
-      auswertung: result.output_text || "Keine Auswertung erhalten."
+      auswertung,
+      emailSent: brevoResponse.ok,
+      brevoResult
     });
   } catch (error) {
     return res.status(500).json({
