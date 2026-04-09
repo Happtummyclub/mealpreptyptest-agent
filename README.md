@@ -1,5 +1,7 @@
 function getSelectedOptionText(field) {
-  if (!field || !Array.isArray(field.options)) return field?.value ?? null;
+  if (!field || !Array.isArray(field.options)) {
+    return field?.value ?? null;
+  }
 
   if (Array.isArray(field.value) && field.value.length > 0) {
     const selectedId = field.value[0];
@@ -76,11 +78,15 @@ export default async function handler(req, res) {
       )
     };
 
+    console.log("PARSED_RESULT", parsed);
+
     return res.status(200).json({
       success: true,
       parsed
     });
   } catch (error) {
+    console.error("PARSING_ERROR", error);
+
     return res.status(500).json({
       success: false,
       error: error.message
