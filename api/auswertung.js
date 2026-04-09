@@ -27,7 +27,7 @@ function extractOpenAIText(openaiResult) {
         if (item.type === "message" && Array.isArray(item.content)) {
           return item.content
             .filter((contentItem) => contentItem.type === "output_text")
-            .map((contentItem) => contentItem.text || "")
+            .map((contentItem) => contentItem.text)
             .join("\n");
         }
         return "";
@@ -154,17 +154,12 @@ ca. 300–500 Wörter.
     });
 
     const openaiResult = await openaiResponse.json();
-
     let auswertung = extractOpenAIText(openaiResult);
 
     if (!openaiResponse.ok || !auswertung) {
       const debugInfo = {
         http_status: openaiResponse.status,
-        response_status: openaiResult?.status || null,
         error: openaiResult?.error || null,
-        model: openaiResult?.model || null,
-        has_output_text: !!openaiResult?.output_text,
-        output_count: Array.isArray(openaiResult?.output) ? openaiResult.output.length : 0,
         raw_preview: truncate(JSON.stringify(openaiResult))
       };
 
@@ -174,45 +169,80 @@ ca. 300–500 Wörter.
         JSON.stringify(debugInfo, null, 2);
     }
 
+    // Optimiertes E-Mail-Design
     const emailHtml = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
-        <p>Hi ${parsed.vorname || "du"},</p>
+      <div style="background-color:#f4f7f6;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;">
+        <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#6B8E23;color:#ffffff;text-align:center;padding:24px;">
+              <h1 style="margin:0;font-size:24px;">Happy Tummy Club</h1>
+              <p style="margin:5px 0 0;font-size:14px;">Dein persönlicher Meal Prep Typ</p>
+            </td>
+          </tr>
 
-        <p>
-          Schön, dass du dir die Zeit für den Test genommen hast.
-          Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
-        </p>
+          <!-- Content -->
+          <tr>
+            <td style="padding:30px;color:#333333;line-height:1.6;">
+              
+              <p>Hi ${parsed.vorname || "du"},</p>
 
-        <p><strong>Hier ist dein persönliches Ergebnis:</strong></p>
+              <p>
+                Schön, dass du dir die Zeit für den Test genommen hast.
+                Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
+              </p>
 
-        <div style="white-space: pre-line; margin-bottom: 20px;">
-          ${auswertung}
-        </div>
+              <h2 style="color:#6B8E23;font-size:18px;margin-top:20px;">
+                Dein persönliches Ergebnis
+              </h2>
 
-        <p><strong>Dein nächster Schritt:</strong></p>
+              <div style="background:#f8fbf9;border-left:4px solid #6B8E23;padding:15px;border-radius:6px;white-space:pre-line;">
+                ${auswertung}
+              </div>
 
-        <p>
-          Finde heraus, wie du Meal Prep ganz unkompliziert und langfristig in deinen Alltag integrieren kannst.
-          Wir schauen uns gemeinsam deine individuellen Herausforderungen im Alltag an und erstellen eine Methode,
-          die wirklich zu dir und deinen Bedürfnissen passt.
-        </p>
+              <h2 style="color:#6B8E23;font-size:18px;margin-top:25px;">
+                Dein nächster Schritt
+              </h2>
 
-        <p>
-          <strong>Buche jetzt deine kostenlose Schnupperstunde:</strong><br>
-          <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color: #6B8E23; font-weight: bold;">
-            Termin buchen
-          </a>
-        </p>
+              <p>
+                Finde heraus, wie du Meal Prep ganz unkompliziert und langfristig in deinen Alltag integrieren kannst.
+                Wir schauen uns gemeinsam deine individuellen Herausforderungen im Alltag an und erstellen eine Methode,
+                die wirklich zu dir und deinen Bedürfnissen passt.
+              </p>
 
-        <p>Ich freue mich auf Dich!</p>
+              <div style="text-align:center;margin:30px 0;">
+                <a href="https://calendly.com/DEIN-LINK"
+                   target="_blank"
+                   style="background-color:#6B8E23;color:#ffffff;text-decoration:none;
+                          padding:14px 24px;border-radius:6px;font-weight:bold;
+                          display:inline-block;">
+                  Kostenlose Schnupperstunde buchen
+                </a>
+              </div>
 
-        <p style="margin-top: 24px;">
-          Liebe Grüße,<br>
-          Samia vom Happy Tummy Club
-        </p>
+              <p>Ich freue mich auf Dich!</p>
+
+              <p style="margin-top:20px;">
+                Liebe Grüße,<br>
+                <strong>Samia vom Happy Tummy Club</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f4f7f6;text-align:center;padding:15px;font-size:12px;color:#777;">
+              © ${new Date().getFullYear()} Happy Tummy Club
+            </td>
+          </tr>
+
+        </table>
       </div>
     `;
 
+    // Versand über Brevo
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -245,7 +275,9 @@ ca. 300–500 Wörter.
       emailSent: brevoResponse.ok,
       brevoResult
     });
+
   } catch (error) {
+    console.error("ERROR:", error);
     return res.status(500).json({
       success: false,
       error: error.message
