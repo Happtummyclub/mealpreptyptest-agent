@@ -16,6 +16,33 @@ function findField(fields, label) {
   return fields.find((field) => field.label === label) || null;
 }
 
+function extractOpenAIText(openaiResult) {
+  if (openaiResult?.output_text) {
+    return openaiResult.output_text;
+  }
+
+  if (Array.isArray(openaiResult?.output)) {
+    const text = openaiResult.output
+      .map((item) => {
+        if (item.type === "message" && Array.isArray(item.content)) {
+          return item.content
+            .filter((contentItem) => contentItem.type === "output_text")
+            .map((contentItem) => contentItem.text)
+            .join("\n");
+        }
+        return "";
+      })
+      .join("\n")
+      .trim();
+
+    if (text) {
+      return text;
+    }
+  }
+
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(200).json({
@@ -97,12 +124,11 @@ Deine Aufgabe:
 Analysiere den Essensalltag dieser Person und erstelle eine strukturierte Auswertung.
 
 WICHTIG:
-- Du lieferst KEINE Lösung und KEIN fertiges System
-- Du analysierst nur Alltag, Herausforderungen und Anforderungen
-- Fokus liegt auf Verständnis, nicht auf Umsetzung
+- Du lieferst KEINE Lösung und KEIN fertiges System.
+- Du analysierst nur Alltag, Herausforderungen und Anforderungen.
+- Fokus liegt auf Verständnis, nicht auf Umsetzung.
 
 Struktur der Antwort:
-
 1. Einordnung der Situation
 2. Emotionaler Spiegel
 3. Zentrale Herausforderungen
@@ -119,9 +145,10 @@ Ton:
 - keine Fachbegriffe
 
 Länge:
-ca. 300–500 Wörter
+ca. 300–500 Wörter.
 `;
 
+    // Anfrage an OpenAI
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -135,27 +162,54 @@ ca. 300–500 Wörter
     });
 
     const openaiResult = await openaiResponse.json();
-    const auswertung =
-      openaiResult.output_text || "Deine Auswertung konnte leider nicht erstellt werden.";
 
+    const auswertung =
+      extractOpenAIText(openaiResult) ||
+      "Deine Auswertung konnte leider nicht erstellt werden.";
+
+    // E-Mail-Inhalt
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+        
         <p>Hi ${parsed.vorname || "du"},</p>
 
-        <p>danke dir, dass du dir die Zeit für den Test genommen hast.</p>
+        <p>
+          Schön, dass du dir die Zeit für den Test genommen hast.
+          Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
+        </p>
 
-        <p>Hier ist dein persönliches Ergebnis:</p>
+        <p><strong>Hier ist dein persönliches Ergebnis:</strong></p>
 
-        <div style="white-space: pre-line;">${auswertung}</div>
+        <div style="white-space: pre-line; margin-bottom: 20px;">
+          ${auswertung}
+        </div>
+
+        <p><strong>Dein nächster Schritt:</strong></p>
+
+        <p>
+          Finde heraus, wie du Meal Prep ganz unkompliziert und langfristig in deinen Alltag integrieren kannst.
+          Wir schauen uns gemeinsam deine individuellen Herausforderungen im Alltag an und erstellen eine Methode,
+          die wirklich zu dir und deinen Bedürfnissen passt.
+        </p>
+
+        <p>
+          <strong>Buche jetzt deine kostenlose Schnupperstunde:</strong><br>
+          <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color: #6B8E23; font-weight: bold;">
+            Termin buchen
+          </a>
+        </p>
+
+        <p>Ich freue mich auf Dich!</p>
 
         <p style="margin-top: 24px;">
-          Liebe Grüße<br>
-          Samia<br>
-          Happy Tummy Club
+          Liebe Grüße,<br>
+          Samia vom Happy Tummy Club
         </p>
+
       </div>
     `;
 
+    // Versand über Brevo
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -188,7 +242,9 @@ ca. 300–500 Wörter
       emailSent: brevoResponse.ok,
       brevoResult
     });
+
   } catch (error) {
+    console.error("ERROR:", error);
     return res.status(500).json({
       success: false,
       error: error.message
