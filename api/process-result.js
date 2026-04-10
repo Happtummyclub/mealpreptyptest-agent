@@ -1,290 +1,106 @@
-export default function handler(req, res) {
-  const WIDTH = 1080;
-  const HEIGHT = 1350;
-  const BG = "#d7afc7";
-  const TEXT = "#000000";
+const resultHtml = `
+<div style="background-color:#f4f7f6;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06);">
+    
+    <!-- Header -->
+    <tr>
+      <td style="background-color:#6B8E23;color:#ffffff;text-align:center;padding:28px 24px;">
+        <h1 style="margin:0;font-size:26px;line-height:1.2;">Happy Tummy Club</h1>
+        <p style="margin:8px 0 0;font-size:14px;opacity:0.95;">Dein persönlicher Meal Prep Typ</p>
+      </td>
+    </tr>
 
-  const TITLE = "dein persönliches Meal Prep Profil";
+    <!-- Content -->
+    <tr>
+      <td style="padding:32px 30px;color:#333333;line-height:1.7;">
+        
+        <p style="margin-top:0;">Hi ${parsed.vorname || "du"},</p>
 
-  const labels = [
-    "Alltagsdynamik",
-    "Mental Load",
-    "Motivation",
-    "Zeitressourcen",
-    "Ernährungsorientierung",
-    "Kochverhalten",
-    "Abwechslungsbedarf",
-    "Flexibilität im Einkauf",
-    "Umgang mit Planänderungen",
-  ];
+        <p>
+          Schön, dass du dir die Zeit für den Test genommen hast. 
+          Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
+        </p>
 
-  const { values = "3,3,3,3,3,3,3,3,3" } = req.query;
+        <!-- Profil-Grafik -->
+        <h2 style="color:#6B8E23;font-size:20px;margin-top:28px;margin-bottom:16px;">
+          Dein persönliches Meal Prep Profil
+        </h2>
 
-  const rawValues = values
-    .split(",")
-    .map((v) => {
-      const num = parseInt(v, 10);
-      if (Number.isNaN(num)) return 3;
-      return Math.min(Math.max(num, 1), 5);
-    })
-    .slice(0, 9);
+        <img
+          src="${chartUrl}"
+          alt="Dein persönliches Meal Prep Profil"
+          style="display:block;width:100%;max-width:580px;height:auto;margin:0 auto 28px auto;border-radius:14px;"
+        />
 
-  while (rawValues.length < 9) {
-    rawValues.push(3);
-  }
+        <!-- Analyse -->
+        <h2 style="color:#6B8E23;font-size:20px;margin-top:0;margin-bottom:16px;">
+          Analyse deines Essensalltags
+        </h2>
 
-  // Kreisgrößen
-  const radiusMap = {
-    1: 58,
-    2: 76,
-    3: 96,
-    4: 118,
-    5: 146,
-  };
+        <div style="
+          background:#f8fbf9;
+          border:1px solid #e4eee7;
+          border-radius:12px;
+          padding:22px 20px;
+          color:#2f3a30;
+          line-height:1.7;
+        ">
+          ${auswertungHtml}
+        </div>
 
-  // Farbwelt: größere Kreise bekommen die leuchtenderen Farben zuerst
-  const rankedColors = [
-    "#dee444",
-    "#f05808",
-    "#e44c81",
-    "#d38329",
-    "#cfb12f",
-    "#448337",
-    "#215413",
-    "#f05808",
-    "#448337",
-  ];
+        <!-- Ableitung -->
+        <h2 style="color:#6B8E23;font-size:20px;margin-top:32px;margin-bottom:14px;">
+          Was bedeutet das für dich?
+        </h2>
 
-  const items = labels.map((label, index) => ({
-    originalIndex: index,
-    label,
-    value: rawValues[index],
-    r: radiusMap[rawValues[index]] || 96,
-    color: "#448337",
-    x: 0,
-    y: 0,
-  }));
+        <p>
+          Deine Ergebnisse zeigen, welche Anforderungen eine passende Meal-Prep-Methode
+          erfüllen sollte. Entscheidend ist ein Ansatz, der sich flexibel in deinen Alltag
+          integrieren lässt und dich nachhaltig entlastet.
+        </p>
 
-  // Größte Kreise zuerst
-  items.sort((a, b) => b.r - a.r);
+        <p>
+          Im nächsten Schritt schauen wir gemeinsam, wie du eine Struktur entwickeln kannst,
+          die wirklich zu deinen Bedürfnissen passt – alltagstauglich, individuell und langfristig umsetzbar.
+        </p>
 
-  items.forEach((item, index) => {
-    item.color = rankedColors[index % rankedColors.length];
-  });
+        <!-- CTA -->
+        <h2 style="color:#6B8E23;font-size:20px;margin-top:32px;margin-bottom:14px;">
+          Dein nächster Schritt
+        </h2>
 
-  // Kreis-Packing: größte Kreise innen, kleinere außen, möglichst eng
-  const placed = [];
-  const gap = 6;
+        <div style="text-align:center;margin:32px 0 24px;">
+          <a href="https://calendly.com/DEIN-LINK"
+             target="_blank"
+             style="
+               background-color:#6B8E23;
+               color:#ffffff;
+               text-decoration:none;
+               padding:14px 26px;
+               border-radius:8px;
+               font-weight:bold;
+               display:inline-block;
+             ">
+            Startgespräch buchen
+          </a>
+        </div>
 
-  function overlaps(x, y, r) {
-    for (const p of placed) {
-      const dx = x - p.x;
-      const dy = y - p.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < r + p.r + gap) {
-        return true;
-      }
-    }
-    return false;
-  }
+        <p style="margin-bottom:0;">Ich freue mich auf Dich!</p>
 
-  // Ersten Kreis in die Mitte
-  placed.push({
-    ...items[0],
-    x: 0,
-    y: 0,
-  });
+        <p style="margin-top:24px;margin-bottom:0;">
+          Liebe Grüße<br>
+          <strong>Samia vom Happy Tummy Club</strong>
+        </p>
+      </td>
+    </tr>
 
-  for (let i = 1; i < items.length; i++) {
-    const item = items[i];
-    let found = false;
+    <!-- Footer -->
+    <tr>
+      <td style="background:#f4f7f6;text-align:center;padding:16px;font-size:12px;color:#777;">
+        © ${new Date().getFullYear()} Happy Tummy Club
+      </td>
+    </tr>
 
-    // Spiral-/Ring-Suche für kompakte Anordnung
-    for (let ring = 0; ring < 900 && !found; ring += 3) {
-      for (let deg = 0; deg < 360 && !found; deg += 4) {
-        const angle = (deg * Math.PI) / 180;
-
-        // leicht organische Ellipse statt perfekter Kreis
-        const x = Math.cos(angle) * ring;
-        const y = Math.sin(angle) * ring * 0.88;
-
-        if (!overlaps(x, y, item.r)) {
-          placed.push({
-            ...item,
-            x,
-            y,
-          });
-          found = true;
-        }
-      }
-    }
-
-    // Fallback
-    if (!found) {
-      placed.push({
-        ...item,
-        x: i * 40,
-        y: i * 20,
-      });
-    }
-  }
-
-  // Bounding Box berechnen
-  const minX = Math.min(...placed.map((p) => p.x - p.r));
-  const maxX = Math.max(...placed.map((p) => p.x + p.r));
-  const minY = Math.min(...placed.map((p) => p.y - p.r));
-  const maxY = Math.max(...placed.map((p) => p.y + p.r));
-
-  const clusterWidth = maxX - minX;
-  const clusterHeight = maxY - minY;
-
-  const targetCenterX = WIDTH / 2;
-  const targetCenterY = 820;
-
-  const currentCenterX = minX + clusterWidth / 2;
-  const currentCenterY = minY + clusterHeight / 2;
-
-  const shiftX = targetCenterX - currentCenterX;
-  const shiftY = targetCenterY - currentCenterY;
-
-  placed.forEach((p) => {
-    p.x += shiftX;
-    p.y += shiftY;
-  });
-
-  function getFontSize(r, labelLength) {
-    if (r >= 135) return 22;
-    if (r >= 115) return 18;
-    if (r >= 95) return 15;
-    if (labelLength > 20) return 10;
-    return 12;
-  }
-
-  function getArcPath(x, y, r, id) {
-    const arcRadius = r * 0.78;
-    const startX = x - arcRadius * 0.88;
-    const endX = x + arcRadius * 0.88;
-    const arcY = y - r * 0.34;
-
-    return `
-      <path
-        id="${id}"
-        d="M ${startX} ${arcY} A ${arcRadius} ${arcRadius} 0 0 1 ${endX} ${arcY}"
-        fill="none"
-        stroke="none"
-      />
-    `;
-  }
-
-  const defs = placed
-    .map((p, index) => getArcPath(p.x, p.y, p.r, `curve-${index}`))
-    .join("");
-
-  const circlesSvg = placed
-    .map((p, index) => {
-      const fontSize = getFontSize(p.r, p.label.length);
-      const valueFontSize = p.r >= 120 ? 44 : p.r >= 100 ? 36 : p.r >= 80 ? 30 : 24;
-      const textLength = Math.max(90, p.r * 1.85);
-
-      return `
-        <g>
-          <circle
-            cx="${p.x}"
-            cy="${p.y}"
-            r="${p.r}"
-            fill="${p.color}"
-            stroke="#000000"
-            stroke-width="3"
-          />
-
-          <text
-            font-family="Arial, Helvetica, sans-serif"
-            font-size="${fontSize}"
-            font-weight="700"
-            fill="${TEXT}"
-            letter-spacing="0.2px"
-            textLength="${textLength}"
-            lengthAdjust="spacingAndGlyphs"
-          >
-            <textPath
-              href="#curve-${index}"
-              startOffset="50%"
-              text-anchor="middle"
-            >
-              ${p.label}
-            </textPath>
-          </text>
-
-          <text
-            x="${p.x}"
-            y="${p.y + 18}"
-            text-anchor="middle"
-            font-family="Arial, Helvetica, sans-serif"
-            font-size="${valueFontSize}"
-            font-weight="800"
-            fill="${TEXT}"
-          >
-            ${p.value}
-          </text>
-        </g>
-      `;
-    })
-    .join("");
-
-  const svg = `
-    <svg
-      width="${WIDTH}"
-      height="${HEIGHT}"
-      viewBox="0 0 ${WIDTH} ${HEIGHT}"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="100%" height="100%" fill="${BG}" />
-
-      <!-- Logo -->
-      <defs>
-        <clipPath id="logoClip">
-          <circle cx="${WIDTH / 2}" cy="170" r="92" />
-        </clipPath>
-        ${defs}
-      </defs>
-
-      <circle
-        cx="${WIDTH / 2}"
-        cy="170"
-        r="92"
-        fill="#d7afc7"
-        stroke="#000000"
-        stroke-width="0"
-      />
-
-      <image
-        href="/logo.png"
-        x="${WIDTH / 2 - 92}"
-        y="${170 - 92}"
-        width="184"
-        height="184"
-        clip-path="url(#logoClip)"
-        preserveAspectRatio="xMidYMid slice"
-      />
-
-      <!-- Titel -->
-      <text
-        x="${WIDTH / 2}"
-        y="320"
-        text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif"
-        font-size="42"
-        font-weight="800"
-        fill="${TEXT}"
-      >
-        ${TITLE}
-      </text>
-
-      ${circlesSvg}
-    </svg>
-  `;
-
-  res.setHeader("Content-Type", "image/svg+xml");
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-  res.status(200).send(svg);
-}
+  </table>
+</div>
+`;
