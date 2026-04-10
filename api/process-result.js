@@ -1,230 +1,290 @@
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-};
+export default function handler(req, res) {
+  const WIDTH = 1080;
+  const HEIGHT = 1350;
+  const BG = "#d7afc7";
+  const TEXT = "#000000";
 
-function extractOpenAIText(openaiResult) {
-  if (openaiResult?.output_text) {
-    return openaiResult.output_text;
+  const TITLE = "dein persönliches Meal Prep Profil";
+
+  const labels = [
+    "Alltagsdynamik",
+    "Mental Load",
+    "Motivation",
+    "Zeitressourcen",
+    "Ernährungsorientierung",
+    "Kochverhalten",
+    "Abwechslungsbedarf",
+    "Flexibilität im Einkauf",
+    "Umgang mit Planänderungen",
+  ];
+
+  const { values = "3,3,3,3,3,3,3,3,3" } = req.query;
+
+  const rawValues = values
+    .split(",")
+    .map((v) => {
+      const num = parseInt(v, 10);
+      if (Number.isNaN(num)) return 3;
+      return Math.min(Math.max(num, 1), 5);
+    })
+    .slice(0, 9);
+
+  while (rawValues.length < 9) {
+    rawValues.push(3);
   }
 
-  if (Array.isArray(openaiResult?.output)) {
-    return openaiResult.output
-      .map((item) => {
-        if (item.type === "message" && Array.isArray(item.content)) {
-          return item.content
-            .filter((c) => c.type === "output_text")
-            .map((c) => c.text)
-            .join("\n");
-        }
-        return "";
-      })
-      .join("\n")
-      .trim();
-  }
+  // Kreisgrößen
+  const radiusMap = {
+    1: 58,
+    2: 76,
+    3: 96,
+    4: 118,
+    5: 146,
+  };
 
-  return null;
-}
+  // Farbwelt: größere Kreise bekommen die leuchtenderen Farben zuerst
+  const rankedColors = [
+    "#dee444",
+    "#f05808",
+    "#e44c81",
+    "#d38329",
+    "#cfb12f",
+    "#448337",
+    "#215413",
+    "#f05808",
+    "#448337",
+  ];
 
-function truncate(str, max = 1200) {
-  if (!str) return "";
-  return str.length > max ? str.slice(0, max) + "…" : str;
-}
+  const items = labels.map((label, index) => ({
+    originalIndex: index,
+    label,
+    value: rawValues[index],
+    r: radiusMap[rawValues[index]] || 96,
+    color: "#448337",
+    x: 0,
+    y: 0,
+  }));
 
-async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": process.env.BREVO_API_KEY,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      sender: {
-        name: "Happy Tummy Club",
-        email: "mail@happytummyclub.de",
-      },
-      to: [
-        {
-          email: toEmail,
-          name: toName,
-        },
-      ],
-      subject,
-      htmlContent,
-    }),
+  // Größte Kreise zuerst
+  items.sort((a, b) => b.r - a.r);
+
+  items.forEach((item, index) => {
+    item.color = rankedColors[index % rankedColors.length];
   });
 
-  const result = await response.json().catch(() => ({}));
+  // Kreis-Packing: größte Kreise innen, kleinere außen, möglichst eng
+  const placed = [];
+  const gap = 6;
 
-  if (!response.ok) {
-    throw new Error(`Brevo error ${response.status}: ${JSON.stringify(result)}`);
+  function overlaps(x, y, r) {
+    for (const p of placed) {
+      const dx = x - p.x;
+      const dy = y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < r + p.r + gap) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  return result;
-}
+  // Ersten Kreis in die Mitte
+  placed.push({
+    ...items[0],
+    x: 0,
+    y: 0,
+  });
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(200).json({
-      success: false,
-      error: "Bitte sende die Daten per POST.",
-    });
-  }
+  for (let i = 1; i < items.length; i++) {
+    const item = items[i];
+    let found = false;
 
-  const secret = req.headers["x-internal-secret"];
+    // Spiral-/Ring-Suche für kompakte Anordnung
+    for (let ring = 0; ring < 900 && !found; ring += 3) {
+      for (let deg = 0; deg < 360 && !found; deg += 4) {
+        const angle = (deg * Math.PI) / 180;
 
-  if (secret !== process.env.INTERNAL_API_SECRET) {
-    return res.status(401).json({
-      success: false,
-      error: "Unauthorized",
-    });
-  }
+        // leicht organische Ellipse statt perfekter Kreis
+        const x = Math.cos(angle) * ring;
+        const y = Math.sin(angle) * ring * 0.88;
 
-  try {
-    const parsed = req.body?.parsed;
+        if (!overlaps(x, y, item.r)) {
+          placed.push({
+            ...item,
+            x,
+            y,
+          });
+          found = true;
+        }
+      }
+    }
 
-    if (!parsed?.email) {
-      return res.status(400).json({
-        success: false,
-        error: "Keine gültigen Daten erhalten.",
+    // Fallback
+    if (!found) {
+      placed.push({
+        ...item,
+        x: i * 40,
+        y: i * 20,
       });
     }
-
-    console.log("Starte OpenAI-Auswertung für:", parsed.email);
-
-    const prompt = `
-Hier sind die Antworten aus dem Meal Prep Test:
-
-Alltagsdynamik: ${parsed.alltagsdynamik}
-Mental Load: ${parsed.mental_load}
-Motivation: ${parsed.motivation}
-Zeit: ${parsed.zeit}
-Ernährungsorientierung: ${parsed.ernaehrungsorientierung}
-Kochverhalten: ${parsed.kochverhalten}
-Abwechslungsbedarf: ${parsed.abwechslungsbedarf}
-Planänderungen: ${parsed.planaenderungen}
-Einkauf: ${parsed.einkauf}
-Kühlschrank: ${parsed.kuehlschrank}
-Gefrierschrank: ${parsed.gefrierschrank}
-
-Deine Aufgabe:
-Analysiere den Essensalltag dieser Person und erstelle eine strukturierte Auswertung.
-
-WICHTIG:
-- Du lieferst KEINE Lösung und KEIN fertiges System.
-- Du analysierst nur Alltag, Herausforderungen und Anforderungen.
-- Fokus liegt auf Verständnis, nicht auf Umsetzung.
-
-Struktur der Antwort:
-1. Einordnung der Situation
-2. Emotionaler Spiegel
-3. Zentrale Herausforderungen
-4. Anforderungen an ein funktionierendes System
-5. Was eher nicht funktioniert
-6. Überleitung
-7. Call to Action
-
-Ton:
-- ruhig
-- verständlich
-- nicht verkäuferisch
-- alltagsnah
-- keine Fachbegriffe
-
-Länge:
-ca. 300–500 Wörter.
-`;
-
-    const openaiResponse = await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4.1",
-          input: prompt,
-        }),
-      }
-    );
-
-    const openaiResult = await openaiResponse.json();
-    let auswertung = extractOpenAIText(openaiResult);
-
-    if (!openaiResponse.ok || !auswertung) {
-      const debugInfo = {
-        http_status: openaiResponse.status,
-        error: openaiResult?.error || null,
-        raw_preview: truncate(JSON.stringify(openaiResult)),
-      };
-
-      auswertung =
-        "Deine Auswertung konnte leider nicht erstellt werden.\n\n" +
-        "Debug-Info:\n" +
-        JSON.stringify(debugInfo, null, 2);
-    }
-
-    console.log("OpenAI-Auswertung erstellt für:", parsed.email);
-
-    const resultHtml = `
-      <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6;">
-        <p>Hi ${parsed.vorname || "du"},</p>
-
-        <p>
-          Schön, dass du dir die Zeit für den Test genommen hast. Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
-        </p>
-
-        <p><strong>Hier ist dein persönliches Ergebnis:</strong></p>
-
-        <div style="white-space: pre-line;">
-          ${auswertung}
-        </div>
-
-        <p><strong>Dein nächster Schritt:</strong></p>
-
-        <p>
-          Finde heraus, wie du Meal Prep ganz unkompliziert und langfristig in deinen Alltag integrieren kannst.
-          Wir schauen uns gemeinsam deine individuellen Herausforderungen im Alltag an und erstellen eine Methode,
-          die wirklich zu dir und deinen Bedürfnissen passt.
-        </p>
-
-        <p>
-          <a href="https://calendly.com/DEIN-LINK">
-            Startgespräch buchen
-          </a>
-        </p>
-
-        <p>
-          Ich freue mich auf Dich!<br><br>
-          Liebe Grüße<br>
-          Samia vom Happy Tummy Club
-        </p>
-      </div>
-    `;
-
-    await sendBrevoEmail({
-      toEmail: parsed.email,
-      toName: `${parsed.vorname} ${parsed.nachname}`.trim(),
-      subject: "Dein persönlicher Meal Prep Typ",
-      htmlContent: resultHtml,
-    });
-
-    console.log("Ergebnis-Mail gesendet an:", parsed.email);
-
-    return res.status(200).json({
-      success: true,
-      message: "Ergebnis verarbeitet und Mail gesendet.",
-    });
-  } catch (error) {
-    console.error("Fehler in /api/process-result:", error);
-
-    return res.status(500).json({
-      success: false,
-      error: error.message,
-    });
   }
+
+  // Bounding Box berechnen
+  const minX = Math.min(...placed.map((p) => p.x - p.r));
+  const maxX = Math.max(...placed.map((p) => p.x + p.r));
+  const minY = Math.min(...placed.map((p) => p.y - p.r));
+  const maxY = Math.max(...placed.map((p) => p.y + p.r));
+
+  const clusterWidth = maxX - minX;
+  const clusterHeight = maxY - minY;
+
+  const targetCenterX = WIDTH / 2;
+  const targetCenterY = 820;
+
+  const currentCenterX = minX + clusterWidth / 2;
+  const currentCenterY = minY + clusterHeight / 2;
+
+  const shiftX = targetCenterX - currentCenterX;
+  const shiftY = targetCenterY - currentCenterY;
+
+  placed.forEach((p) => {
+    p.x += shiftX;
+    p.y += shiftY;
+  });
+
+  function getFontSize(r, labelLength) {
+    if (r >= 135) return 22;
+    if (r >= 115) return 18;
+    if (r >= 95) return 15;
+    if (labelLength > 20) return 10;
+    return 12;
+  }
+
+  function getArcPath(x, y, r, id) {
+    const arcRadius = r * 0.78;
+    const startX = x - arcRadius * 0.88;
+    const endX = x + arcRadius * 0.88;
+    const arcY = y - r * 0.34;
+
+    return `
+      <path
+        id="${id}"
+        d="M ${startX} ${arcY} A ${arcRadius} ${arcRadius} 0 0 1 ${endX} ${arcY}"
+        fill="none"
+        stroke="none"
+      />
+    `;
+  }
+
+  const defs = placed
+    .map((p, index) => getArcPath(p.x, p.y, p.r, `curve-${index}`))
+    .join("");
+
+  const circlesSvg = placed
+    .map((p, index) => {
+      const fontSize = getFontSize(p.r, p.label.length);
+      const valueFontSize = p.r >= 120 ? 44 : p.r >= 100 ? 36 : p.r >= 80 ? 30 : 24;
+      const textLength = Math.max(90, p.r * 1.85);
+
+      return `
+        <g>
+          <circle
+            cx="${p.x}"
+            cy="${p.y}"
+            r="${p.r}"
+            fill="${p.color}"
+            stroke="#000000"
+            stroke-width="3"
+          />
+
+          <text
+            font-family="Arial, Helvetica, sans-serif"
+            font-size="${fontSize}"
+            font-weight="700"
+            fill="${TEXT}"
+            letter-spacing="0.2px"
+            textLength="${textLength}"
+            lengthAdjust="spacingAndGlyphs"
+          >
+            <textPath
+              href="#curve-${index}"
+              startOffset="50%"
+              text-anchor="middle"
+            >
+              ${p.label}
+            </textPath>
+          </text>
+
+          <text
+            x="${p.x}"
+            y="${p.y + 18}"
+            text-anchor="middle"
+            font-family="Arial, Helvetica, sans-serif"
+            font-size="${valueFontSize}"
+            font-weight="800"
+            fill="${TEXT}"
+          >
+            ${p.value}
+          </text>
+        </g>
+      `;
+    })
+    .join("");
+
+  const svg = `
+    <svg
+      width="${WIDTH}"
+      height="${HEIGHT}"
+      viewBox="0 0 ${WIDTH} ${HEIGHT}"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="100%" height="100%" fill="${BG}" />
+
+      <!-- Logo -->
+      <defs>
+        <clipPath id="logoClip">
+          <circle cx="${WIDTH / 2}" cy="170" r="92" />
+        </clipPath>
+        ${defs}
+      </defs>
+
+      <circle
+        cx="${WIDTH / 2}"
+        cy="170"
+        r="92"
+        fill="#d7afc7"
+        stroke="#000000"
+        stroke-width="0"
+      />
+
+      <image
+        href="/logo.png"
+        x="${WIDTH / 2 - 92}"
+        y="${170 - 92}"
+        width="184"
+        height="184"
+        clip-path="url(#logoClip)"
+        preserveAspectRatio="xMidYMid slice"
+      />
+
+      <!-- Titel -->
+      <text
+        x="${WIDTH / 2}"
+        y="320"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="42"
+        font-weight="800"
+        fill="${TEXT}"
+      >
+        ${TITLE}
+      </text>
+
+      ${circlesSvg}
+    </svg>
+  `;
+
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.status(200).send(svg);
 }
