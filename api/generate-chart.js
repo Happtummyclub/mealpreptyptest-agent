@@ -4,21 +4,20 @@ export default function handler(req, res) {
 
   const BG = "#d7afc7";
   const TEXT = "#000000";
-  const TITLE = "dein persönliches Meal Prep Profil";
+  const TITLE = "DEIN PERSÖNLICHES MEAL PREP PROFIL";
 
   const labels = [
-    "Alltagsdynamik",
-    "Mental Load",
-    "Motivation",
-    "Zeitressourcen",
-    "Ernährungsorientierung",
-    "Kochverhalten",
-    "Abwechslungsbedarf",
-    "Flexibilität im Einkauf",
-    "Umgang mit Planänderungen",
+    "ALLTAGSDYNAMIK",
+    "MENTAL LOAD",
+    "MOTIVATION",
+    "ZEITRESSOURCEN",
+    "ERNÄHRUNGSORIENTIERUNG",
+    "KOCHVERHALTEN",
+    "ABWECHSLUNGSBEDARF",
+    "FLEXIBILITÄT IM EINKAUF",
+    "UMGANG MIT PLANÄNDERUNGEN",
   ];
 
-  // Leuchtendere Farben zuerst für größere Kreise
   const palette = [
     "#dee444",
     "#f05808",
@@ -46,57 +45,37 @@ export default function handler(req, res) {
     rawValues.push(3);
   }
 
+  // Deutlich stärkere Größenunterschiede
   const radiusMap = {
-    1: 62,
-    2: 82,
-    3: 104,
-    4: 126,
-    5: 152,
+    1: 42,
+    2: 68,
+    3: 102,
+    4: 146,
+    5: 210,
   };
 
   const items = labels.map((label, index) => ({
     originalIndex: index,
     label,
     value: rawValues[index],
-    r: radiusMap[rawValues[index]] || 104,
+    r: radiusMap[rawValues[index]] || 102,
     color: "#448337",
     x: 0,
     y: 0,
     touches: 0,
   }));
 
-  // große Kreise zuerst
+  // Große Kreise zuerst
   items.sort((a, b) => b.r - a.r);
 
+  // Leuchtendere Farben zuerst auf größere Kreise
   items.forEach((item, index) => {
     item.color = palette[index % palette.length];
   });
 
   const placed = [];
-  const touchGap = 0; // berühren erlaubt
-  const maxTouchesPreferred = 2;
-
-  function distance(a, b) {
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  function countTouches(x, y, r) {
-    let touches = 0;
-    for (const p of placed) {
-      const dx = x - p.x;
-      const dy = y - p.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const target = r + p.r + touchGap;
-
-      // "berührt", wenn fast exakt tangential
-      if (Math.abs(dist - target) <= 5) {
-        touches++;
-      }
-    }
-    return touches;
-  }
+  const touchGap = 0; // Kreise dürfen sich exakt berühren
+  const preferredMinTouches = 3;
 
   function overlaps(x, y, r) {
     for (const p of placed) {
@@ -110,27 +89,47 @@ export default function handler(req, res) {
     return false;
   }
 
+  function countTouches(x, y, r) {
+    let touches = 0;
+    for (const p of placed) {
+      const dx = x - p.x;
+      const dy = y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const target = r + p.r + touchGap;
+
+      if (Math.abs(dist - target) <= 6) {
+        touches++;
+      }
+    }
+    return touches;
+  }
+
   function candidateScore(x, y, r) {
     const distFromCenter = Math.sqrt(x * x + y * y);
     const touches = countTouches(x, y, r);
 
-    // Bevorzugt: 1 oder 2 Berührungen, nah am Clusterzentrum
     let touchPenalty = 0;
-    if (touches === 0) touchPenalty = 900;
-    else if (touches === 1) touchPenalty = 0;
-    else if (touches === 2) touchPenalty = 20;
-    else touchPenalty = 500 + (touches - 2) * 200;
+
+    if (touches >= preferredMinTouches) {
+      touchPenalty = 0;
+    } else if (touches === 2) {
+      touchPenalty = 500;
+    } else if (touches === 1) {
+      touchPenalty = 1200;
+    } else {
+      touchPenalty = 2500;
+    }
 
     return distFromCenter + touchPenalty;
   }
 
-  // asymmetrische Richtungsgewichte für organische Form
+  // asymmetrische Anordnung für organische Form
   const preferredAngles = [
-    18, 42, 71, 103, 142, 188, 227, 279, 322,
-    12, 55, 94, 136, 174, 216, 254, 301, 338
+    12, 26, 41, 57, 74, 93, 115, 138, 161,
+    185, 208, 232, 255, 279, 302, 324, 343
   ];
 
-  // erster Kreis in Zentrum
+  // erster Kreis in die Mitte
   placed.push({
     ...items[0],
     x: 0,
@@ -138,28 +137,22 @@ export default function handler(req, res) {
     touches: 0,
   });
 
-  // restliche Kreise außen ansetzen
   for (let i = 1; i < items.length; i++) {
     const item = items[i];
-
     let best = null;
 
-    // 1) Tangential an bereits platzierte Kreise setzen
+    // Kandidaten bevorzugt an mehreren bestehenden Kreisen entlang suchen
     for (const anchor of placed) {
       const baseDistance = anchor.r + item.r + touchGap;
 
       for (const deg of preferredAngles) {
         const angle = (deg * Math.PI) / 180;
-
-        // leichte Ellipse + Asymmetrie
         const x = anchor.x + Math.cos(angle) * baseDistance;
-        const y = anchor.y + Math.sin(angle) * baseDistance * 0.88;
+        const y = anchor.y + Math.sin(angle) * baseDistance * 0.9;
 
         if (overlaps(x, y, item.r)) continue;
 
         const touches = countTouches(x, y, item.r);
-        if (touches > 3) continue;
-
         const score = candidateScore(x, y, item.r);
 
         if (!best || score < best.score) {
@@ -168,19 +161,17 @@ export default function handler(req, res) {
       }
     }
 
-    // 2) Falls noch nichts Gutes gefunden wurde: feinere Suche
-    if (!best) {
-      for (let ring = 20; ring < 900; ring += 3) {
-        for (let deg = 0; deg < 360; deg += 5) {
+    // Falls noch keine gute Mehrfachberührung gefunden wurde:
+    if (!best || best.touches < preferredMinTouches) {
+      for (let ring = 20; ring < 900; ring += 2) {
+        for (let deg = 0; deg < 360; deg += 3) {
           const angle = (deg * Math.PI) / 180;
           const x = Math.cos(angle) * ring;
-          const y = Math.sin(angle) * ring * 0.88;
+          const y = Math.sin(angle) * ring * 0.9;
 
           if (overlaps(x, y, item.r)) continue;
 
           const touches = countTouches(x, y, item.r);
-          if (touches > 3) continue;
-
           const score = candidateScore(x, y, item.r);
 
           if (!best || score < best.score) {
@@ -192,10 +183,10 @@ export default function handler(req, res) {
 
     if (!best) {
       best = {
-        x: i * 40,
-        y: i * 30,
+        x: i * 50,
+        y: i * 35,
         touches: 0,
-        score: 9999,
+        score: 99999,
       };
     }
 
@@ -207,7 +198,7 @@ export default function handler(req, res) {
     });
   }
 
-  // Bounding Box
+  // Bounding Box bestimmen
   const minX = Math.min(...placed.map((p) => p.x - p.r));
   const maxX = Math.max(...placed.map((p) => p.x + p.r));
   const minY = Math.min(...placed.map((p) => p.y - p.r));
@@ -216,14 +207,20 @@ export default function handler(req, res) {
   const clusterWidth = maxX - minX;
   const clusterHeight = maxY - minY;
 
-  const targetCenterX = WIDTH / 2;
-  const targetCenterY = 760;
+  // Mehr Rand zum Bildrand
+  const usableTop = 280;
+  const usableBottom = HEIGHT - 180;
+  const usableCenterY = usableTop + (usableBottom - usableTop) / 2;
+
+  const usableLeft = 140;
+  const usableRight = WIDTH - 140;
+  const usableCenterX = usableLeft + (usableRight - usableLeft) / 2;
 
   const currentCenterX = minX + clusterWidth / 2;
   const currentCenterY = minY + clusterHeight / 2;
 
-  const shiftX = targetCenterX - currentCenterX;
-  const shiftY = targetCenterY - currentCenterY;
+  const shiftX = usableCenterX - currentCenterX;
+  const shiftY = usableCenterY - currentCenterY;
 
   placed.forEach((p) => {
     p.x += shiftX;
@@ -231,18 +228,18 @@ export default function handler(req, res) {
   });
 
   function getFontSize(r, labelLength) {
-    if (r >= 145) return 22;
-    if (r >= 125) return 18;
-    if (r >= 105) return 15;
-    if (labelLength > 20) return 10;
-    return 12;
+    if (r >= 190) return 22;
+    if (r >= 145) return 18;
+    if (r >= 110) return 14;
+    if (labelLength > 20) return 9;
+    return 11;
   }
 
   function getArcPath(x, y, r, id) {
-    const arcRadius = r * 0.78;
+    const arcRadius = r * 0.77;
     const startX = x - arcRadius * 0.88;
     const endX = x + arcRadius * 0.88;
-    const arcY = y - r * 0.34;
+    const arcY = y - r * 0.32;
 
     return `
       <path
@@ -261,7 +258,7 @@ export default function handler(req, res) {
   const circlesSvg = placed
     .map((p, index) => {
       const fontSize = getFontSize(p.r, p.label.length);
-      const textLength = Math.max(90, p.r * 1.92);
+      const textLength = Math.max(90, p.r * 1.9);
 
       return `
         <g>
@@ -270,12 +267,10 @@ export default function handler(req, res) {
             cy="${p.y}"
             r="${p.r}"
             fill="${p.color}"
-            stroke="#000000"
-            stroke-width="3"
           />
 
           <text
-            font-family="Arial, Helvetica, sans-serif"
+            font-family="Montserrat, Arial, Helvetica, sans-serif"
             font-size="${fontSize}"
             font-weight="700"
             fill="${TEXT}"
@@ -304,11 +299,18 @@ export default function handler(req, res) {
     >
       <rect width="100%" height="100%" fill="${BG}" />
 
+      <defs>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap');
+        </style>
+        ${defs}
+      </defs>
+
       <text
         x="${WIDTH / 2}"
-        y="170"
+        y="165"
         text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif"
+        font-family="Montserrat, Arial, Helvetica, sans-serif"
         font-size="42"
         font-weight="800"
         fill="${TEXT}"
@@ -316,7 +318,6 @@ export default function handler(req, res) {
         ${TITLE}
       </text>
 
-      ${defs}
       ${circlesSvg}
     </svg>
   `;
