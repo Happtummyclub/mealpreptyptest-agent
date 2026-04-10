@@ -74,7 +74,7 @@ export default function handler(req, res) {
   });
 
   const placed = [];
-  const touchGap = 0; // Kreise dürfen sich exakt berühren
+  const touchGap = 0;
   const preferredMinTouches = 3;
 
   function overlaps(x, y, r) {
@@ -123,13 +123,11 @@ export default function handler(req, res) {
     return distFromCenter + touchPenalty;
   }
 
-  // asymmetrische Anordnung für organische Form
   const preferredAngles = [
     12, 26, 41, 57, 74, 93, 115, 138, 161,
     185, 208, 232, 255, 279, 302, 324, 343
   ];
 
-  // erster Kreis in die Mitte
   placed.push({
     ...items[0],
     x: 0,
@@ -141,7 +139,6 @@ export default function handler(req, res) {
     const item = items[i];
     let best = null;
 
-    // Kandidaten bevorzugt an mehreren bestehenden Kreisen entlang suchen
     for (const anchor of placed) {
       const baseDistance = anchor.r + item.r + touchGap;
 
@@ -161,7 +158,6 @@ export default function handler(req, res) {
       }
     }
 
-    // Falls noch keine gute Mehrfachberührung gefunden wurde:
     if (!best || best.touches < preferredMinTouches) {
       for (let ring = 20; ring < 900; ring += 2) {
         for (let deg = 0; deg < 360; deg += 3) {
@@ -198,7 +194,6 @@ export default function handler(req, res) {
     });
   }
 
-  // Bounding Box bestimmen
   const minX = Math.min(...placed.map((p) => p.x - p.r));
   const maxX = Math.max(...placed.map((p) => p.x + p.r));
   const minY = Math.min(...placed.map((p) => p.y - p.r));
@@ -207,7 +202,6 @@ export default function handler(req, res) {
   const clusterWidth = maxX - minX;
   const clusterHeight = maxY - minY;
 
-  // Mehr Rand zum Bildrand
   const usableTop = 280;
   const usableBottom = HEIGHT - 180;
   const usableCenterY = usableTop + (usableBottom - usableTop) / 2;
@@ -300,9 +294,6 @@ export default function handler(req, res) {
       <rect width="100%" height="100%" fill="${BG}" />
 
       <defs>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap');
-        </style>
         ${defs}
       </defs>
 
