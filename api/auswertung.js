@@ -22,36 +22,6 @@ function findField(fields, label) {
   return fields.find((field) => field.label === label) || null;
 }
 
-async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": process.env.BREVO_API_KEY,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      sender: {
-        name: "Happy Tummy Club",
-        email: "mail@happytummyclub.de",
-      },
-      to: [
-        {
-          email: toEmail,
-          name: toName,
-        },
-      ],
-      subject,
-      htmlContent,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Brevo error: ${errorText}`);
-  }
-}
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(200).json({
@@ -106,40 +76,23 @@ export default async function handler(req, res) {
 
     console.log("Webhook empfangen für:", parsed.email);
 
-    // 📧 Bestätigungsmail – exakt dein Text
-    const confirmationHtml = `
-      <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #222;">
-        <p>Hi ${parsed.vorname || "du"},</p>
+    const triggerResponse = await fetch(
+      `${process.env.APP_BASE_URL}/api/process-results`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-secret": process.env.INTERNAL_API_SECRET,
+        },
+        body: JSON.stringify({ parsed }),
+      }
+    );
 
-        <p>
-          Schön, dass du dir die Zeit für den Test genommen hast. Ein erster Schritt für mehr Selbstfürsorge im Alltag. Sehr gut!
-          Deine persönliche Auswertung wird gerade erstellt und erreicht dich in Kürze per E-Mail.
-        </p>
+    const triggerText = await triggerResponse.text().catch(() => "");
 
-        <p>
-          Liebe Grüße<br>
-          Samia vom Happy Tummy Club
-        </p>
-      </div>
-    `;
-
-    await sendBrevoEmail({
-      toEmail: parsed.email,
-      toName: `${parsed.vorname} ${parsed.nachname}`.trim(),
-      subject: "Deine Auswertung ist unterwegs",
-      htmlContent: confirmationHtml,
-    });
-
-    console.log("Bestätigungsmail gesendet an:", parsed.email);
-
-    // 🔄 Zweiten Endpoint aufrufen
-    await fetch(`${process.env.APP_BASE_URL}/api/process-result`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-internal-secret": process.env.INTERNAL_API_SECRET,
-      },
-      body: JSON.stringify({ parsed }),
+    console.log("process-results angestoßen:", {
+      status: triggerResponse.status,
+      body: triggerText,
     });
 
     return res.status(200).json({
