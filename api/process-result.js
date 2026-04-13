@@ -306,13 +306,12 @@ ca. 300–500 Wörter.
               </div>
 
               <p>
-                Falls der Button nicht funktioniert, kannst du dein Ergebnis auch direkt über
-                diesen Link öffnen:
+                Falls der Button nicht funktioniert, kannst du dein Ergebnis auch direkt hier öffnen:
               </p>
 
-              <p style="word-break:break-word;">
-                <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;">
-                  ${resultPageUrl}
+              <p>
+                <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
+                  Dein persönliches Profil
                 </a>
               </p>
 
