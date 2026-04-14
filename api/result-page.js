@@ -84,9 +84,9 @@ export default async function handler(req, res) {
     while (values.length < 9) values.push(3);
 
     const chartUrl =
-      `${process.env.APP_BASE_URL}/api/generate-chart` +
-      `?values=${encodeURIComponent(values.join(","))}` +
-      `&v=${Date.now()}`;
+      `${process.env.APP_BASE_URL}/api/generate-chart?values=${encodeURIComponent(
+        values.join(",")
+      )}&v=${Date.now()}`;
 
     const prompt = `
 Erstelle eine personalisierte Analyse des Essensalltags basierend auf den Ergebnissen eines Meal-Prep-Tests.
@@ -95,27 +95,7 @@ Schreibe ausschließlich in der Du-Form und verwende einen wertschätzenden, st�
 
 Ziel der Analyse ist es, der Person zu helfen, ihren Essensalltag besser zu verstehen und einzuordnen. Zeige auf, was bereits gut funktioniert, welche Herausforderungen bestehen und wo Potenziale für mehr Struktur, Entlastung und Wohlbefinden liegen.
 
-Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist. Eine individuelle, flexible und nachhaltige Strategie ist entscheidend, um langfristig eine alltagstaugliche und umsetzbare Lösung zu entwickeln.
-
-Die Analyse soll:
-- die wichtigsten Erkenntnisse aus den Testergebnissen zusammenfassen,
-- den persönlichen Alltag realistisch widerspiegeln,
-- Stärken und Entwicklungspotenziale aufzeigen,
-- Orientierung geben und Selbstwirksamkeit fördern,
-- als Grundlage für eine passende Meal-Prep-Strategie dienen.
-
-Strukturiere den Text in drei Absätze:
-1. Einordnung des aktuellen Essensalltags,
-2. zentrale Stärken und Herausforderungen,
-3. Potenziale und Ausblick.
-
-Verwende nach Möglichkeit Begriffe wie:
-„flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“, „umsetzbar“ und „selbstfürsorglich“.
-
-Vermeide negativ konnotierte oder wertende Begriffe wie:
-„fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
-
-Formuliere stattdessen neutral und unterstützend. Stelle Herausforderungen als Entwicklungsmöglichkeiten dar und vermittle Zuversicht, Klarheit und Selbstwirksamkeit.
+Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist. Eine individuelle, flexible und nachhaltige Strategie ist entscheidend.
 
 Der Text soll zwischen 120 und 180 Wörtern umfassen.
 
@@ -125,20 +105,24 @@ Ergebnisse der neun Dimensionen:
 ${valuesToContext(values)}
 `;
 
-    let analysisHtml = "<p>Deine Auswertung konnte leider nicht erstellt werden.</p>";
+    let analysisHtml =
+      "<p>Deine Auswertung konnte leider nicht erstellt werden.</p>";
 
     try {
-      const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4.1",
-          input: prompt,
-        }),
-      });
+      const openaiResponse = await fetch(
+        "https://api.openai.com/v1/responses",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4.1",
+            input: prompt,
+          }),
+        }
+      );
 
       const openaiResult = await openaiResponse.json();
       const analysisText = extractOpenAIText(openaiResult);
@@ -147,210 +131,253 @@ ${valuesToContext(values)}
         analysisHtml = paragraphsFromText(analysisText);
       }
     } catch (error) {
-      console.error("Fehler in result-page OpenAI:", error);
+      console.error("Fehler bei OpenAI:", error);
     }
 
-    const meaningHtml = `
-      <p>Deine Ergebnisse zeigen, welche Anforderungen eine passende Meal-Prep-Methode erfüllen sollte. Entscheidend ist ein Ansatz, der sich flexibel in deinen Alltag integrieren lässt und dich nachhaltig entlastet.</p>
-      <p>Im nächsten Schritt schauen wir gemeinsam, wie du eine Struktur entwickeln kannst, die wirklich zu dir und deinen Bedürfnissen passt – alltagstauglich, individuell und langfristig umsetzbar.</p>
-    `;
-
     const html = `
-      <!DOCTYPE html>
-      <html lang="de">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Dein persönliches Meal Prep Profil</title>
-          <style>
-            body {
-              margin: 0;
-              padding: 0;
-              background: #f4f7f6;
-              font-family: Arial, Helvetica, sans-serif;
-              color: #333333;
-            }
-            .wrapper {
-              max-width: 760px;
-              margin: 0 auto;
-              padding: 40px 20px;
-            }
-            .card {
-              background: #ffffff;
-              border-radius: 18px;
-              overflow: hidden;
-              box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
-            }
-            .header {
-              background: #6B8E23;
-              color: white;
-              text-align: center;
-              padding: 30px 24px;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 28px;
-              line-height: 1.2;
-            }
-            .header p {
-              margin: 8px 0 0 0;
-              font-size: 14px;
-              opacity: 0.95;
-            }
-            .content {
-              padding: 34px 30px 38px 30px;
-              line-height: 1.7;
-            }
-            h2 {
-              color: #6B8E23;
-              font-size: 22px;
-              margin-top: 32px;
-              margin-bottom: 16px;
-            }
-            .chart-box {
-              background: #f8fbf9;
-              border-radius: 14px;
-              padding: 18px;
-              margin-bottom: 28px;
-              text-align: center;
-            }
-            .chart-box img {
-              display: block;
-              width: 100%;
-              max-width: 620px;
-              height: auto;
-              margin: 0 auto;
-              border-radius: 14px;
-            }
-            .text-box {
-              background: #f8fbf9;
-              border: 1px solid #e4eee7;
-              border-radius: 12px;
-              padding: 22px 20px;
-              color: #2f3a30;
-            }
-            .cta {
-              text-align: center;
-              margin: 34px 0 10px 0;
-            }
-            .cta a {
-              background: #6B8E23;
-              color: #ffffff;
-              text-decoration: none;
-              padding: 14px 26px;
-              border-radius: 8px;
-              font-weight: bold;
-              display: inline-block;
-            }
-            .footer {
-              text-align: center;
-              font-size: 12px;
-              color: #777;
-              padding: 18px;
-              background: #f4f7f6;
-            }
-            p {
-              margin-top: 0;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="wrapper">
-            <div class="card">
-              <div class="header">
-                <h1>Happy Tummy Club</h1>
-                <p>Dein persönliches Meal Prep Profil</p>
-              </div>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dein persönliches Meal Prep Profil</title>
 
-              <div class="content">
-                <p>Hi ${escapeHtml(name)},</p>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
-                <p>
-                  schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge.
-                  Dein persönliches Ergebnis zeigt dir, wie dein Essensalltag aktuell aussieht – und welche Faktoren ihn besonders prägen.
-                </p>
+<style>
+body {
+  margin: 0;
+  background: #f9f6f8;
+  font-family: 'Montserrat', sans-serif;
+  color: #333;
+}
 
-                <p>
-                  Dabei werden neun Dimensionen betrachtet, die dir helfen zu erkennen, was für dich gut funktioniert und wo du dir mehr Struktur,
-                  Entlastung und Klarheit wünschst.
-                </p>
+.wrapper {
+  max-width: 900px;
+  margin: auto;
+  padding: 40px 20px;
+}
 
-                <p>
-                  Meal Prep ist kein „One-Size-Fits-All“-Thema. Ob Beruf, Familienkonstellation, Budget, zeitliche Ressourcen oder einfach der Platz
-                  in der Küche – wir haben alle unterschiedliche Herausforderungen und vor allem: einen sehr individuellen Alltag. Meal-Prep-Pläne von
-                  Social Media und Co. sind daher keine langfristige Lösung, da sie meist nicht oder nur eingeschränkt auf deine persönlichen Bedürfnisse
-                  eingehen. Genau darauf kommt es jedoch an, wenn du dir Entlastung und eine geregelte Ernährung im Alltag wünschst.
-                </p>
+.card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
 
-                <p>
-                  Die folgende Auswertung hilft dir dabei, deine aktuellen Gewohnheiten und Herausforderungen besser zu verstehen und einzuordnen –
-                  als Grundlage für nachhaltige Veränderungen und mehr Leichtigkeit im Alltag.
-                </p>
+.header {
+  background: #d7afc7;
+  color: white;
+  text-align: center;
+  padding: 30px 20px;
+}
 
-                <p>
-                  Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam
-                  auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben
-                  integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
-                </p>
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
 
-                <div class="cta">
-                  <a href="${escapeHtml(calendly)}" target="_blank">Kostenloses Startgespräch buchen</a>
-                </div>
+.header p {
+  margin: 5px 0 0;
+  font-size: 14px;
+}
 
-                <h2>Dein Profil auf einen Blick</h2>
+.content {
+  padding: 35px;
+  line-height: 1.7;
+}
 
-                <p>
-                  Die folgende Grafik zeigt dein persönliches Meal Prep Profil auf einen Blick. Sie veranschaulicht, welche Faktoren deinen Essensalltag
-                  prägen und wo Potenziale für mehr Struktur, Entlastung und Wohlbefinden liegen.
-                </p>
+h2 {
+  color: #f05808;
+  margin-top: 40px;
+}
 
-                <div class="chart-box">
-                  <img src="${escapeHtml(chartUrl)}" alt="Dein persönliches Meal Prep Profil" />
-                </div>
+.chart-box {
+  text-align: center;
+  margin: 30px 0;
+}
 
-                <h2>Analyse deines Essensalltags</h2>
+.chart-box img {
+  max-width: 100%;
+  border-radius: 12px;
+}
 
-                <div class="text-box">
-                  ${analysisHtml}
-                </div>
+.accordion-item {
+  border-bottom: 1px solid #eaddea;
+}
 
-                <h2>Was bedeutet das für dich?</h2>
+.accordion-button {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  text-align: left;
+  font-size: 18px;
+  font-weight: 600;
+  color: #f05808;
+  padding: 16px 0;
+  cursor: pointer;
+}
 
-                <div class="text-box">
-                  ${meaningHtml}
-                </div>
+.accordion-button::after {
+  content: "+";
+  float: right;
+  font-size: 20px;
+}
 
-                <h2>Dein nächster Schritt</h2>
+.accordion-button.active::after {
+  content: "–";
+}
 
-                <p>
-                  Wenn du herausfinden möchtest, wie du daraus eine Meal-Prep-Methode entwickeln kannst, die wirklich zu deinem Alltag passt,
-                  dann ist das der nächste sinnvolle Schritt.
-                </p>
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background: #faf7f9;
+  border-radius: 10px;
+  padding: 0 15px;
+}
 
-                <div class="cta">
-                  <a href="${escapeHtml(calendly)}" target="_blank">Kostenloses Startgespräch buchen</a>
-                </div>
+.accordion-content p,
+.accordion-content ul {
+  margin: 15px 0;
+}
 
-                <p style="margin-top: 28px; margin-bottom: 0;">
-                  Liebe Grüße<br />
-                  Samia Tömen<br />
-                  Happy Tummy Club
-                </p>
-              </div>
+.accordion-content ul {
+  padding-left: 20px;
+}
 
-              <div class="footer">
-                © ${new Date().getFullYear()} Happy Tummy Club
-              </div>
+.cta {
+  text-align: center;
+  margin: 30px 0;
+}
+
+.cta a {
+  background: #d7afc7;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+  padding: 20px;
+  background: #f4f4f4;
+}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+  <div class="card">
+
+    <div class="header">
+      <h1>Happy Tummy Club</h1>
+      <p>Dein persönliches Meal Prep Profil</p>
+    </div>
+
+    <div class="content">
+      <p>Hi ${escapeHtml(name)},</p>
+
+      <p>
+        schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge.
+        Dein persönliches Ergebnis zeigt dir, wie dein Essensalltag aktuell aussieht und welche Faktoren ihn besonders prägen.
+      </p>
+
+      <div class="cta">
+        <a href="${escapeHtml(calendly)}" target="_blank">
+          Kostenloses Startgespräch buchen
+        </a>
+      </div>
+
+      <h2>Dein Profil auf einen Blick</h2>
+      <div class="chart-box">
+        <img src="${chartUrl}" alt="Meal Prep Profil">
+      </div>
+
+      <h2>Analyse deines Essensalltags</h2>
+      <div>${analysisHtml}</div>
+
+      <h2>Deine persönliche Auswertung</h2>
+
+      <div class="accordion">
+
+        <div class="accordion-item">
+          <button class="accordion-button">So zeigt sich dein Essensalltag</button>
+          <div class="accordion-content">
+            <p>Dein persönliches Ergebnis gibt dir einen ganzheitlichen Einblick in deinen aktuellen Essensalltag und zeigt, welche Faktoren dich prägen.</p>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-button">Was deine Meal-Prep-Methode leisten sollte</button>
+          <div class="accordion-content">
+            <ul>
+              <li>Flexibilität bei Planänderungen</li>
+              <li>Zeitersparnis und Entlastung</li>
+              <li>Klare und verlässliche Strukturen</li>
+              <li>Realistische Vorbereitung und Lagerung</li>
+              <li>Individuelle Anpassung an deinen Alltag</li>
+              <li>Nachhaltige und langfristige Umsetzbarkeit</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-button">Was eher nicht zu dir passt</button>
+          <div class="accordion-content">
+            <p>Starre Wochenpläne und standardisierte Social-Media-Konzepte berücksichtigen häufig nicht die individuellen Anforderungen deines Alltags.</p>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-button">Dein nächster Schritt</button>
+          <div class="accordion-content">
+            <p>In einem kostenlosen Orientierungsgespräch entwickeln wir gemeinsam eine Meal-Prep-Strategie, die optimal zu dir passt.</p>
+            <div class="cta">
+              <a href="${escapeHtml(calendly)}" target="_blank">
+                Kostenloses Startgespräch buchen
+              </a>
             </div>
           </div>
-        </body>
-      </html>
-    `;
+        </div>
+
+      </div>
+
+      <p>Liebe Grüße<br>Samia Tömen<br>Happy Tummy Club</p>
+    </div>
+
+    <div class="footer">
+      © ${new Date().getFullYear()} Happy Tummy Club
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.querySelectorAll(".accordion-button").forEach(button => {
+  button.addEventListener("click", () => {
+    button.classList.toggle("active");
+    const content = button.nextElementSibling;
+    content.style.maxHeight = content.style.maxHeight
+      ? null
+      : content.scrollHeight + "px";
+  });
+});
+</script>
+
+</body>
+</html>
+`;
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.status(200).send(html);
   } catch (error) {
-    console.error("Fehler in /api/result-page:", error);
+    console.error("Fehler:", error);
     res.status(500).send("Fehler beim Laden der Ergebnis-Seite.");
   }
 }
