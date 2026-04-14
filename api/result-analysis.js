@@ -113,11 +113,11 @@ function deriveWhatNotFits(values) {
   }
 
   if (fragments.length === 0) {
-    return "Pauschale Meal-Prep-Konzepte aus Social Media sehen oft gut aus, greifen aber im Alltag zu kurz, wenn sie nicht zu deinen tatsächlichen Anforderungen passen.";
+    return "Pauschale Meal-Prep-Konzepte aus Social Media sehen oft gut aus, greifen im Alltag aber zu kurz, wenn sie nicht zu deinen tatsächlichen Anforderungen passen.";
   }
 
   if (fragments.length === 1) {
-    return `Weniger passend für dich sind vor allem ${fragments[0]}, weil sie deine aktuellen Anforderungen im Alltag zu wenig berücksichtigen.`;
+    return `Weniger passend für dich ist vor allem ${fragments[0]}, weil das deine aktuellen Anforderungen im Alltag zu wenig berücksichtigt.`;
   }
 
   const last = fragments.pop();
