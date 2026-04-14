@@ -84,6 +84,80 @@ function splitIntoThreeParagraphs(text = "") {
   ];
 }
 
+function deriveRequirements(values) {
+  const requirements = [];
+
+  const [
+    alltagsdynamik,
+    mentalLoad,
+    motivation,
+    zeit,
+    ernaehrung,
+    kochverhalten,
+    abwechslungsbedarf,
+    einkauf,
+    planaenderungen,
+  ] = values;
+
+  if (alltagsdynamik >= 4) {
+    requirements.push("eine Struktur, die sich flexibel an einen dynamischen Alltag anpassen lässt");
+  } else if (alltagsdynamik === 3) {
+    requirements.push("eine Struktur mit genug Spielraum für Veränderungen");
+  } else {
+    requirements.push("eine Struktur, die gut mit planbaren und festen Abläufen arbeiten kann");
+  }
+
+  if (mentalLoad >= 4) {
+    requirements.push("eine klare und übersichtliche Organisation, die den täglichen Denk- und Entscheidungsaufwand reduziert");
+  } else if (mentalLoad === 3) {
+    requirements.push("eine alltagstaugliche Struktur, die Orientierung gibt, ohne zusätzlichen Aufwand zu erzeugen");
+  }
+
+  if (motivation >= 4) {
+    requirements.push("eine Herangehensweise, die auch an Tagen mit wenig Energie verlässlich funktioniert");
+  }
+
+  if (zeit >= 4) {
+    requirements.push("größere Abstände zwischen den Vorbereitungseinheiten, da häufiges Preppen im Alltag schwer umsetzbar ist");
+    requirements.push("einen insgesamt geringen Zeitaufwand, der sich realistisch in deinen Alltag integrieren lässt");
+  } else if (zeit === 3) {
+    requirements.push("einen ausgewogenen und realistischen Prep-Rhythmus, der sich gut in deinen Alltag einfügt");
+  } else {
+    requirements.push("kürzere und regelmäßigere Prep-Intervalle, die mit deiner Zeit gut vereinbar sind");
+  }
+
+  if (ernaehrung >= 4) {
+    requirements.push("eine Struktur, die eine verlässliche und ausgewogene Ernährung im Alltag unterstützt");
+  }
+
+  if (kochverhalten <= 2) {
+    requirements.push("eine Herangehensweise, die ohne umfangreiche Kochroutinen auskommt");
+  } else if (kochverhalten >= 4) {
+    requirements.push("eine Struktur, die deine Bereitschaft zum frischen Kochen sinnvoll mit einbezieht");
+  }
+
+  if (abwechslungsbedarf >= 4) {
+    requirements.push("genug Vielfalt, ohne dass dadurch zusätzlicher Planungsaufwand entsteht");
+  } else if (abwechslungsbedarf <= 2) {
+    requirements.push("eine verlässliche Struktur, die mit Wiederholung und klaren Routinen gut funktioniert");
+  }
+
+  if (einkauf <= 2) {
+    requirements.push("eine Planung, die mit wenigen Einkaufsterminen zuverlässig funktioniert");
+  } else if (einkauf >= 4) {
+    requirements.push("eine Struktur, die deine flexible Einkaufssituation sinnvoll mit aufnimmt");
+  }
+
+  if (planaenderungen >= 4) {
+    requirements.push("eine hohe Anpassungsfähigkeit an spontane Planänderungen");
+  } else if (planaenderungen === 3) {
+    requirements.push("eine Struktur, die Veränderungen auffangen kann, ohne unübersichtlich zu werden");
+  }
+
+  const uniqueRequirements = [...new Set(requirements)];
+  return uniqueRequirements.slice(0, 5);
+}
+
 export default async function handler(req, res) {
   try {
     const name = req.query.name ? String(req.query.name) : "du";
@@ -102,6 +176,11 @@ export default async function handler(req, res) {
 
     while (values.length < 9) values.push(3);
 
+    const requirements = deriveRequirements(values);
+    const requirementsHtml = requirements
+      .map((req) => `<li>${escapeHtml(req)}</li>`)
+      .join("");
+
     const chartUrl =
       `${process.env.APP_BASE_URL}/api/generate-chart?values=${encodeURIComponent(
         values.join(",")
@@ -110,10 +189,10 @@ export default async function handler(req, res) {
     const prompt = `
 Erstelle eine personalisierte Auswertung eines Meal-Prep-Tests.
 
-Schreibe ausschließlich in der Du-Form und verwende einen wertschätzenden, stärkenorientierten und motivierenden Ton. Die Sprache soll klar, nahbar, professionell und alltagstauglich sein. Vermeide Fachjargon, Floskeln, Emojis und übertriebene Werbesprache.
+Schreibe ausschließlich in der Du-Form und verwende einen lockeren, wertschätzenden und motivierenden Ton. Die Sprache soll natürlich, klar und nahbar sein. Vermeide Fachjargon, Floskeln, Emojis und übertriebene Werbesprache.
 
 WICHTIG:
-Die Auswertung soll aus genau drei klar voneinander getrennten Absätzen bestehen.
+Die Auswertung soll aus genau drei klar getrennten Absätzen bestehen.
 
 Absatz 1:
 Beschreibe, wie sich der Essensalltag aktuell zeigt. Gib eine übergeordnete Einordnung des Alltags, der Gewohnheiten und der Rahmenbedingungen. Dieser Absatz gehört in die Kategorie „So zeigt sich dein Essensalltag“.
@@ -122,14 +201,22 @@ Absatz 2:
 Beschreibe ausschließlich, was bereits gut funktioniert. Hebe vorhandene Stärken, hilfreiche Gewohnheiten, Ressourcen und förderliche Voraussetzungen hervor. Dieser Absatz gehört in die Kategorie „Was bereits gut funktioniert“.
 
 Absatz 3:
-Beschreibe ausschließlich, was den Alltag aktuell besonders fordert oder erschwert. Formuliere dabei wertschätzend und ohne negative oder abwertende Begriffe. Stelle Herausforderungen als nachvollziehbare Anforderungen des Alltags dar. Dieser Absatz gehört in die Kategorie „Was dich aktuell besonders fordert“.
+Beschreibe ausschließlich, was den Alltag aktuell besonders fordert oder erschwert. Formuliere dabei wertschätzend und ohne negative oder abwertende Begriffe. Dieser Absatz gehört in die Kategorie „Was dich aktuell besonders fordert“.
 
-Zusätzliche Vorgaben:
-- Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist.
-- Verwende nach Möglichkeit Begriffe wie „flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“, „umsetzbar“ und „selbstfürsorglich“.
-- Vermeide negativ konnotierte oder wertende Begriffe wie „fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
-- Formuliere neutral, unterstützend und stärkend.
-- Schreibe insgesamt zwischen 120 und 180 Wörtern.
+WICHTIG:
+Die Auswertung darf ausschließlich Herausforderungen, Bedürfnisse und Anforderungen beschreiben. Es dürfen keine konkreten Lösungen, Strategien, Rezepte oder Handlungsempfehlungen genannt werden.
+
+Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist, sondern zu den persönlichen Bedürfnissen und zum Alltag passen muss.
+
+Verwende nach Möglichkeit Begriffe wie:
+„flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“ und „umsetzbar“.
+
+Vermeide negativ konnotierte oder wertende Begriffe wie:
+„fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
+
+Formuliere stattdessen verständlich, empathisch und unterstützend.
+
+Der Text soll zwischen 120 und 180 Wörtern umfassen.
 
 Name: ${name}
 
@@ -168,6 +255,12 @@ ${valuesToContext(values)}
     } catch (error) {
       console.error("Fehler bei OpenAI:", error);
     }
+
+    const selfUrl =
+      `${process.env.APP_BASE_URL}/api/result-page` +
+      `?name=${encodeURIComponent(name)}` +
+      `&values=${encodeURIComponent(values.join(","))}` +
+      `&calendly=${encodeURIComponent(calendly)}`;
 
     const html = `
 <!DOCTYPE html>
@@ -368,21 +461,24 @@ ${valuesToContext(values)}
           <div class="accordion-item">
             <button class="accordion-button">Was deine Meal-Prep-Methode leisten sollte</button>
             <div class="accordion-content">
+              <p>
+                Aus deiner Auswertung wird deutlich, dass eine passende Meal-Prep-Methode bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:
+              </p>
               <ul>
-                <li>Flexibilität bei Planänderungen</li>
-                <li>Zeitersparnis und Entlastung im Alltag</li>
-                <li>Klare und verlässliche Strukturen</li>
-                <li>Realistische Vorbereitung, Lagerung und Nutzung</li>
-                <li>Eine Anpassung an deine persönlichen Bedürfnisse</li>
-                <li>Eine langfristig umsetzbare und nachhaltige Lösung</li>
+                ${requirementsHtml}
               </ul>
+              <p>
+                Genau daran zeigt sich, wie wichtig eine Herangehensweise ist, die wirklich zu deinen Rahmenbedingungen passt.
+              </p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was eher nicht zu dir passt</button>
             <div class="accordion-content">
-              <p>Starre Wochenpläne und standardisierte Meal-Prep-Konzepte aus Social Media berücksichtigen häufig nicht die individuellen Anforderungen deines Alltags. Damit Meal Prep dich wirklich entlastet, braucht es eine Lösung, die zu dir passt – nicht nur eine, die gut aussieht.</p>
+              <p>
+                Standardisierte Meal-Prep-Pläne aus Social Media berücksichtigen häufig nicht die individuellen Anforderungen deines Alltags. Dein Ergebnis zeigt, dass pauschale Lösungen langfristig nicht die gewünschte Entlastung bringen. Stattdessen braucht es eine Herangehensweise, die zu deiner persönlichen Situation passt.
+              </p>
             </div>
           </div>
         </div>
@@ -400,11 +496,7 @@ ${valuesToContext(values)}
           <p class="fallback-link">
             Sollte einer der Links nicht funktionieren, kannst du dein Ergebnis auch direkt hier aufrufen:<br>
             <strong>Dein persönliches Profil:</strong><br>
-            <a class="cta-link" href="${process.env.APP_BASE_URL}/api/result-page?name=${encodeURIComponent(
-              name
-            )}&values=${encodeURIComponent(values.join(","))}&calendly=${encodeURIComponent(
-      calendly
-    )}" target="_blank">Dein persönliches Profil</a>
+            <a class="cta-link" href="${selfUrl}" target="_blank">Dein persönliches Profil</a>
           </p>
         </div>
 
