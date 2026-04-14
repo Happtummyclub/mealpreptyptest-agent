@@ -4,36 +4,6 @@ export const config = {
   },
 };
 
-function extractOpenAIText(openaiResult) {
-  if (typeof openaiResult?.output_text === "string" && openaiResult.output_text.trim()) {
-    return openaiResult.output_text.trim();
-  }
-
-  if (Array.isArray(openaiResult?.output)) {
-    const text = openaiResult.output
-      .map((item) => {
-        if (item.type === "message" && Array.isArray(item.content)) {
-          return item.content
-            .filter((contentItem) => contentItem.type === "output_text")
-            .map((contentItem) => contentItem.text || "")
-            .join("\n");
-        }
-        return "";
-      })
-      .join("\n")
-      .trim();
-
-    if (text) return text;
-  }
-
-  return null;
-}
-
-function truncate(str, max = 1200) {
-  if (!str) return "";
-  return str.length > max ? str.slice(0, max) + "…" : str;
-}
-
 async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -171,109 +141,13 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log("Starte OpenAI-Auswertung für:", parsed.email);
-
-    const prompt = `
-Erstelle eine personalisierte Analyse des Essensalltags basierend auf den Ergebnissen eines Meal-Prep-Tests.
-
-Schreibe ausschließlich in der Du-Form und verwende einen wertschätzenden, stärkenorientierten und motivierenden Ton. Die Sprache soll klar, nahbar, professionell und alltagstauglich sein. Vermeide Fachjargon, Floskeln, Emojis und übertriebene Werbesprache.
-
-Ziel der Analyse ist es, der Person zu helfen, ihren Essensalltag besser zu verstehen und einzuordnen. Zeige auf, was bereits gut funktioniert, welche Herausforderungen bestehen und wo Potenziale für mehr Struktur, Entlastung und Wohlbefinden liegen.
-
-Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist. Eine individuelle, flexible und nachhaltige Strategie ist entscheidend, um langfristig eine alltagstaugliche und umsetzbare Lösung zu entwickeln.
-
-Die Analyse soll:
-- die wichtigsten Erkenntnisse aus den Testergebnissen zusammenfassen,
-- den persönlichen Alltag realistisch widerspiegeln,
-- Stärken und Entwicklungspotenziale aufzeigen,
-- Orientierung geben und Selbstwirksamkeit fördern,
-- als Grundlage für eine passende Meal-Prep-Strategie dienen.
-
-Strukturiere den Text in drei Absätze:
-1. Einordnung des aktuellen Essensalltags,
-2. zentrale Stärken und Herausforderungen,
-3. Potenziale und Ausblick.
-
-Verwende nach Möglichkeit Begriffe wie:
-„flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“, „umsetzbar“ und „selbstfürsorglich“.
-
-Vermeide negativ konnotierte oder wertende Begriffe wie:
-„fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
-
-Formuliere stattdessen neutral und unterstützend. Stelle Herausforderungen als Entwicklungsmöglichkeiten dar und vermittle Zuversicht, Klarheit und Selbstwirksamkeit.
-
-Der Text soll zwischen 120 und 180 Wörtern umfassen.
-
-Hier sind die Ergebnisse:
-
-Name: ${parsed.vorname || ""}
-
-Ergebnisse der neun Dimensionen:
-- Alltagsdynamik: ${parsed.alltagsdynamik}
-- Mental Load: ${parsed.mental_load}
-- Motivation: ${parsed.motivation}
-- Zeit: ${parsed.zeit}
-- Ernährungsorientierung: ${parsed.ernaehrungsorientierung}
-- Kochverhalten: ${parsed.kochverhalten}
-- Abwechslungsbedarf: ${parsed.abwechslungsbedarf}
-- Einkauf: ${parsed.einkauf}
-- Umgang mit Planänderungen: ${parsed.planaenderungen}
-`;
-
-    const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1",
-        input: prompt,
-      }),
-    });
-
-    const openaiResult = await openaiResponse.json();
-    let auswertungHtml = extractOpenAIText(openaiResult);
-
-    if (!openaiResponse.ok || !auswertungHtml) {
-      const debugInfo = {
-        http_status: openaiResponse.status,
-        error: openaiResult?.error || null,
-        raw_preview: truncate(JSON.stringify(openaiResult)),
-      };
-
-      auswertungHtml = `
-        <p>Deine Auswertung konnte leider nicht erstellt werden.</p>
-        <p><strong>Debug-Info:</strong></p>
-        <p>${JSON.stringify(debugInfo)}</p>
-      `;
-    } else {
-      auswertungHtml = `
-        <p>${auswertungHtml
-          .split("\n")
-          .filter(Boolean)
-          .map((paragraph) => paragraph.trim())
-          .join("</p><p>")}</p>
-      `;
-    }
-
-    console.log("OpenAI-Auswertung erstellt für:", parsed.email);
-
     const chartValues = buildChartValues(parsed);
-    const chartUrl = `${process.env.APP_BASE_URL}/api/generate-chart?values=${encodeURIComponent(chartValues)}&v=${Date.now()}`;
 
-    const meaningHtml = `
-      <p>Deine Ergebnisse zeigen, welche Anforderungen eine passende Meal-Prep-Methode erfüllen sollte. Entscheidend ist ein Ansatz, der sich flexibel in deinen Alltag integrieren lässt und dich nachhaltig entlastet.</p>
-      <p>Im nächsten Schritt schauen wir gemeinsam, wie du eine Struktur entwickeln kannst, die wirklich zu dir und deinen Bedürfnissen passt – alltagstauglich, individuell und langfristig umsetzbar.</p>
-    `;
-
-    const resultPageUrl = `${process.env.APP_BASE_URL}/api/result-page?name=${encodeURIComponent(
-      parsed.vorname || "du"
-    )}&chart=${encodeURIComponent(chartUrl)}&analysis=${encodeURIComponent(
-      auswertungHtml
-    )}&meaning=${encodeURIComponent(
-      meaningHtml
-    )}&calendly=${encodeURIComponent("https://calendly.com/DEIN-LINK")}`;
+    const resultPageUrl =
+      `${process.env.APP_BASE_URL}/api/result-page` +
+      `?name=${encodeURIComponent(parsed.vorname || "du")}` +
+      `&values=${encodeURIComponent(chartValues)}` +
+      `&calendly=${encodeURIComponent("https://calendly.com/DEIN-LINK")}`;
 
     const resultHtml = `
       <div style="background-color:#f4f7f6;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;">
@@ -291,11 +165,10 @@ Ergebnisse der neun Dimensionen:
 
               <p>
                 schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge.
-                Dein persönliches Ergebnis ist jetzt für dich verfügbar.
+                Dein persönliches Ergebnis ist jetzt für dich verfügbar:
               </p>
 
               <p>
-                👉 <strong>Hier findest du dein persönliches Ergebnis:</strong><br>
                 <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
                   Dein persönliches Meal Prep Profil ansehen
                 </a>
@@ -303,27 +176,26 @@ Ergebnisse der neun Dimensionen:
 
               <p>
                 Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch
-                und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal
-                Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele
-                erreichst – strukturiert und in deinem eigenen Tempo.
+                und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep
+                alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst –
+                strukturiert und in deinem eigenen Tempo.
               </p>
 
               <p>
-                👉 <strong>Kostenloses Startgespräch buchen</strong><br>
-                <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
+                <strong>Kostenloses Startgespräch buchen</strong><br>
+                <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color:#6B8E23;text-decoration:underline;">
                   https://calendly.com/DEIN-LINK
                 </a>
               </p>
 
               <p>
                 Sollte einer der Links nicht funktionieren, kannst du dein Ergebnis auch direkt hier aufrufen:<br>
-                <strong>Dein persönliches Profil:</strong>
                 <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
                   Dein persönliches Profil
                 </a>
               </p>
 
-              <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung :)</p>
+              <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
 
               <p style="margin-top:24px;">
                 Liebe Grüße<br>
