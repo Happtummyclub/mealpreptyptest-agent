@@ -150,54 +150,54 @@ export default async function handler(req, res) {
       `&calendly=${encodeURIComponent("https://calendly.com/DEIN-LINK")}`;
 
     const resultHtml = `
-      <div style="background-color:#f4f7f6;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;">
+      <div style="background-color:#f9f6f8;padding:40px 20px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+          Mehr Struktur und Entlastung für deinen Alltag.
+        </div>
+
         <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06);">
           <tr>
-            <td style="background-color:#6B8E23;color:#ffffff;text-align:center;padding:28px 24px;">
-              <h1 style="margin:0;font-size:26px;">Happy Tummy Club</h1>
-              <p style="margin:8px 0 0;font-size:14px;">Dein persönliches Meal Prep Profil</p>
+            <td style="background-color:#d7afc7;color:#ffffff;text-align:center;padding:28px 24px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
+              <h1 style="margin:0;font-size:26px;font-weight:700;">Happy Tummy Club</h1>
+              <p style="margin:8px 0 0;font-size:14px;font-weight:500;">Dein persönliches Meal Prep Profil</p>
             </td>
           </tr>
 
           <tr>
-            <td style="padding:32px 30px;color:#333333;line-height:1.7;">
-              <p>Hi ${parsed.vorname || "du"},</p>
+            <td style="padding:32px 30px;color:#333333;line-height:1.7;font-size:16px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
+              <p style="margin-top:0;">Hi ${parsed.vorname || "du"},</p>
 
               <p>
-                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge.
-                Dein persönliches Ergebnis ist jetzt für dich verfügbar:
+                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge. Dein persönliches Ergebnis ist jetzt für dich verfügbar:
               </p>
 
               <p>
-                <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
+                <a href="${resultPageUrl}" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
                   Dein persönliches Meal Prep Profil ansehen
                 </a>
               </p>
 
               <p>
-                Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch
-                und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep
-                alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst –
-                strukturiert und in deinem eigenen Tempo.
+                Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
               </p>
 
               <p>
                 <strong>Kostenloses Startgespräch buchen</strong><br>
-                <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color:#6B8E23;text-decoration:underline;">
+                <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
                   https://calendly.com/DEIN-LINK
                 </a>
               </p>
 
               <p>
                 Sollte einer der Links nicht funktionieren, kannst du dein Ergebnis auch direkt hier aufrufen:<br>
-                <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
+                <a href="${resultPageUrl}" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
                   Dein persönliches Profil
                 </a>
               </p>
 
               <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
 
-              <p style="margin-top:24px;">
+              <p style="margin-top:24px;margin-bottom:0;">
                 Liebe Grüße<br>
                 Samia Tömen<br>
                 Happy Tummy Club
@@ -206,7 +206,7 @@ export default async function handler(req, res) {
           </tr>
 
           <tr>
-            <td style="background:#f4f7f6;text-align:center;padding:16px;font-size:12px;color:#777;">
+            <td style="background:#f4f4f4;text-align:center;padding:16px;font-size:12px;color:#777777;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
               © ${new Date().getFullYear()} Happy Tummy Club
             </td>
           </tr>
