@@ -66,7 +66,6 @@ function splitIntoThreeParagraphs(text = "") {
     return parts.slice(0, 3);
   }
 
-  // Fallback: grob nach Sätzen in drei Teile teilen
   const sentences = text
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
@@ -109,26 +108,28 @@ export default async function handler(req, res) {
       )}&v=${Date.now()}`;
 
     const prompt = `
-Erstelle eine personalisierte Analyse des Essensalltags basierend auf den Ergebnissen eines Meal-Prep-Tests.
+Erstelle eine personalisierte Auswertung eines Meal-Prep-Tests.
 
 Schreibe ausschließlich in der Du-Form und verwende einen wertschätzenden, stärkenorientierten und motivierenden Ton. Die Sprache soll klar, nahbar, professionell und alltagstauglich sein. Vermeide Fachjargon, Floskeln, Emojis und übertriebene Werbesprache.
 
-Ziel der Analyse ist es, der Person zu helfen, ihren Essensalltag besser zu verstehen und einzuordnen. Zeige auf, was bereits gut funktioniert, welche Herausforderungen bestehen und wo Potenziale für mehr Struktur, Entlastung und Wohlbefinden liegen.
+WICHTIG:
+Die Auswertung soll aus genau drei klar voneinander getrennten Absätzen bestehen.
 
-Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist. Eine individuelle, flexible und nachhaltige Strategie ist entscheidend.
+Absatz 1:
+Beschreibe, wie sich der Essensalltag aktuell zeigt. Gib eine übergeordnete Einordnung des Alltags, der Gewohnheiten und der Rahmenbedingungen. Dieser Absatz gehört in die Kategorie „So zeigt sich dein Essensalltag“.
 
-Strukturiere den Text in genau drei Absätze:
-1. Einordnung des aktuellen Essensalltags,
-2. zentrale Stärken und Herausforderungen,
-3. Potenziale und Ausblick.
+Absatz 2:
+Beschreibe ausschließlich, was bereits gut funktioniert. Hebe vorhandene Stärken, hilfreiche Gewohnheiten, Ressourcen und förderliche Voraussetzungen hervor. Dieser Absatz gehört in die Kategorie „Was bereits gut funktioniert“.
 
-Verwende nach Möglichkeit Begriffe wie:
-„flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“, „umsetzbar“ und „selbstfürsorglich“.
+Absatz 3:
+Beschreibe ausschließlich, was den Alltag aktuell besonders fordert oder erschwert. Formuliere dabei wertschätzend und ohne negative oder abwertende Begriffe. Stelle Herausforderungen als nachvollziehbare Anforderungen des Alltags dar. Dieser Absatz gehört in die Kategorie „Was dich aktuell besonders fordert“.
 
-Vermeide negativ konnotierte oder wertende Begriffe wie:
-„fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
-
-Der Text soll zwischen 120 und 180 Wörtern umfassen.
+Zusätzliche Vorgaben:
+- Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist.
+- Verwende nach Möglichkeit Begriffe wie „flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“, „umsetzbar“ und „selbstfürsorglich“.
+- Vermeide negativ konnotierte oder wertende Begriffe wie „fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
+- Formuliere neutral, unterstützend und stärkend.
+- Schreibe insgesamt zwischen 120 und 180 Wörtern.
 
 Name: ${name}
 
@@ -199,7 +200,7 @@ ${valuesToContext(values)}
 
   .header {
     background: #d7afc7;
-    color: #ffffff;
+    color: #333333;
     text-align: center;
     padding: 30px 20px;
   }
@@ -242,27 +243,8 @@ ${valuesToContext(values)}
     margin: 0 auto;
   }
 
-  .analysis-box {
-    background: #faf7f9;
-    border: 1px solid #eaddea;
-    border-radius: 12px;
-    padding: 22px 20px;
-  }
-
-  .analysis-subtitle {
-    color: #f05808;
-    font-weight: 700;
-    font-size: 16px;
-    margin: 0 0 8px 0;
-  }
-
-  .analysis-box p {
-    margin-top: 0;
-    margin-bottom: 18px;
-  }
-
-  .analysis-box p:last-child {
-    margin-bottom: 0;
+  .accordion {
+    margin-top: 8px;
   }
 
   .accordion-item {
@@ -359,22 +341,30 @@ ${valuesToContext(values)}
           <img src="${chartUrl}" alt="Dein persönliches Meal Prep Profil">
         </div>
 
-        <h2>Analyse deines Essensalltags</h2>
-
-        <div class="analysis-box">
-          <div class="analysis-subtitle">Einordnung deines aktuellen Essensalltags</div>
-          <p>${escapeHtml(analysisParagraphs[0] || "")}</p>
-
-          <div class="analysis-subtitle">Zentrale Stärken und Herausforderungen</div>
-          <p>${escapeHtml(analysisParagraphs[1] || "")}</p>
-
-          <div class="analysis-subtitle">Potenziale und Ausblick</div>
-          <p>${escapeHtml(analysisParagraphs[2] || "")}</p>
-        </div>
-
         <h2>Deine persönliche Auswertung</h2>
 
         <div class="accordion">
+          <div class="accordion-item">
+            <button class="accordion-button">So zeigt sich dein Essensalltag</button>
+            <div class="accordion-content">
+              <p>${escapeHtml(analysisParagraphs[0] || "")}</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-button">Was bereits gut funktioniert</button>
+            <div class="accordion-content">
+              <p>${escapeHtml(analysisParagraphs[1] || "")}</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-button">Was dich aktuell besonders fordert</button>
+            <div class="accordion-content">
+              <p>${escapeHtml(analysisParagraphs[2] || "")}</p>
+            </div>
+          </div>
+
           <div class="accordion-item">
             <button class="accordion-button">Was deine Meal-Prep-Methode leisten sollte</button>
             <div class="accordion-content">
