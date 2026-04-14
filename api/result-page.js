@@ -37,12 +37,6 @@ export default async function handler(req, res) {
       `?name=${encodeURIComponent(name)}` +
       `&values=${encodeURIComponent(valuesString)}`;
 
-    const selfUrl =
-      `${process.env.APP_BASE_URL}/api/result-page` +
-      `?name=${encodeURIComponent(name)}` +
-      `&values=${encodeURIComponent(valuesString)}` +
-      `&calendly=${encodeURIComponent(calendly)}`;
-
     const html = `
 <!DOCTYPE html>
 <html lang="de">
@@ -190,10 +184,6 @@ export default async function handler(req, res) {
     text-decoration: underline;
   }
 
-  .fallback-link {
-    margin-top: 18px;
-  }
-
   .footer {
     text-align: center;
     font-size: 12px;
@@ -262,27 +252,20 @@ export default async function handler(req, res) {
 
         <div class="cta-block">
           <p class="cta-text">
-            Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
+            Du möchtest tiefer in deine Ergebnisse einsteigen und herausfinden, wie du deine ganz persönliche Methode für dein Meal Prep findest? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
           </p>
 
           <p>
             <strong>Kostenloses Startgespräch buchen</strong><br>
             <a class="cta-link" href="${escapeHtml(calendly)}" target="_blank">${escapeHtml(calendly)}</a>
           </p>
-
-          <p class="fallback-link">
-            Sollte einer der Links nicht funktionieren, kannst du dein Ergebnis auch direkt hier aufrufen:<br>
-            <strong>Dein persönliches Profil:</strong><br>
-            <a class="cta-link" href="${selfUrl}" target="_blank">Dein persönliches Profil</a>
-          </p>
         </div>
 
         <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
 
         <p>
-          Liebe Grüße<br>
-          Samia Tömen<br>
-          Happy Tummy Club
+          Viele Grüße,<br>
+          Samia vom Happy Tummy Club
         </p>
       </div>
 
