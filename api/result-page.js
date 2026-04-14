@@ -7,157 +7,6 @@ function escapeHtml(str = "") {
     .replaceAll("'", "&#39;");
 }
 
-function levelFromScore(score) {
-  if (score <= 2) return "niedrig";
-  if (score === 3) return "mittel";
-  return "hoch";
-}
-
-function valuesToContext(values) {
-  const labels = [
-    "Alltagsdynamik",
-    "Mental Load",
-    "Motivation",
-    "Zeit",
-    "Ernährungsorientierung",
-    "Kochverhalten",
-    "Abwechslungsbedarf",
-    "Einkauf",
-    "Umgang mit Planänderungen",
-  ];
-
-  return labels
-    .map((label, i) => `- ${label}: ${values[i]} (${levelFromScore(values[i])})`)
-    .join("\n");
-}
-
-function extractOpenAIText(openaiResult) {
-  if (typeof openaiResult?.output_text === "string" && openaiResult.output_text.trim()) {
-    return openaiResult.output_text.trim();
-  }
-
-  if (Array.isArray(openaiResult?.output)) {
-    const text = openaiResult.output
-      .map((item) => {
-        if (item.type === "message" && Array.isArray(item.content)) {
-          return item.content
-            .filter((contentItem) => contentItem.type === "output_text")
-            .map((contentItem) => contentItem.text || "")
-            .join("\n");
-        }
-        return "";
-      })
-      .join("\n")
-      .trim();
-
-    if (text) return text;
-  }
-
-  return null;
-}
-
-function splitIntoThreeParagraphs(text = "") {
-  const parts = text
-    .split(/\n\s*\n|\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 3) {
-    return parts.slice(0, 3);
-  }
-
-  const sentences = text
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  if (sentences.length <= 3) {
-    while (sentences.length < 3) sentences.push("");
-    return sentences;
-  }
-
-  const chunkSize = Math.ceil(sentences.length / 3);
-  return [
-    sentences.slice(0, chunkSize).join(" "),
-    sentences.slice(chunkSize, chunkSize * 2).join(" "),
-    sentences.slice(chunkSize * 2).join(" "),
-  ];
-}
-
-function deriveRequirements(values) {
-  const requirements = [];
-
-  const [
-    alltagsdynamik,
-    mentalLoad,
-    motivation,
-    zeit,
-    ernaehrung,
-    kochverhalten,
-    abwechslungsbedarf,
-    einkauf,
-    planaenderungen,
-  ] = values;
-
-  if (alltagsdynamik >= 4) {
-    requirements.push("eine Struktur, die sich flexibel an einen dynamischen Alltag anpassen lässt");
-  } else if (alltagsdynamik === 3) {
-    requirements.push("eine Struktur mit genug Spielraum für Veränderungen");
-  } else {
-    requirements.push("eine Struktur, die gut mit planbaren und festen Abläufen arbeiten kann");
-  }
-
-  if (mentalLoad >= 4) {
-    requirements.push("eine klare und übersichtliche Organisation, die den täglichen Denk- und Entscheidungsaufwand reduziert");
-  } else if (mentalLoad === 3) {
-    requirements.push("eine alltagstaugliche Struktur, die Orientierung gibt, ohne zusätzlichen Aufwand zu erzeugen");
-  }
-
-  if (motivation >= 4) {
-    requirements.push("eine Herangehensweise, die auch an Tagen mit wenig Energie verlässlich funktioniert");
-  }
-
-  if (zeit >= 4) {
-    requirements.push("größere Abstände zwischen den Vorbereitungseinheiten, da häufiges Preppen im Alltag schwer umsetzbar ist");
-    requirements.push("einen insgesamt geringen Zeitaufwand, der sich realistisch in deinen Alltag integrieren lässt");
-  } else if (zeit === 3) {
-    requirements.push("einen ausgewogenen und realistischen Prep-Rhythmus, der sich gut in deinen Alltag einfügt");
-  } else {
-    requirements.push("kürzere und regelmäßigere Prep-Intervalle, die mit deiner Zeit gut vereinbar sind");
-  }
-
-  if (ernaehrung >= 4) {
-    requirements.push("eine Struktur, die eine verlässliche und ausgewogene Ernährung im Alltag unterstützt");
-  }
-
-  if (kochverhalten <= 2) {
-    requirements.push("eine Herangehensweise, die ohne umfangreiche Kochroutinen auskommt");
-  } else if (kochverhalten >= 4) {
-    requirements.push("eine Struktur, die deine Bereitschaft zum frischen Kochen sinnvoll mit einbezieht");
-  }
-
-  if (abwechslungsbedarf >= 4) {
-    requirements.push("genug Vielfalt, ohne dass dadurch zusätzlicher Planungsaufwand entsteht");
-  } else if (abwechslungsbedarf <= 2) {
-    requirements.push("eine verlässliche Struktur, die mit Wiederholung und klaren Routinen gut funktioniert");
-  }
-
-  if (einkauf <= 2) {
-    requirements.push("eine Planung, die mit wenigen Einkaufsterminen zuverlässig funktioniert");
-  } else if (einkauf >= 4) {
-    requirements.push("eine Struktur, die deine flexible Einkaufssituation sinnvoll mit aufnimmt");
-  }
-
-  if (planaenderungen >= 4) {
-    requirements.push("eine hohe Anpassungsfähigkeit an spontane Planänderungen");
-  } else if (planaenderungen === 3) {
-    requirements.push("eine Struktur, die Veränderungen auffangen kann, ohne unübersichtlich zu werden");
-  }
-
-  const uniqueRequirements = [...new Set(requirements)];
-  return uniqueRequirements.slice(0, 5);
-}
-
 export default async function handler(req, res) {
   try {
     const name = req.query.name ? String(req.query.name) : "du";
@@ -176,90 +25,22 @@ export default async function handler(req, res) {
 
     while (values.length < 9) values.push(3);
 
-    const requirements = deriveRequirements(values);
-    const requirementsHtml = requirements
-      .map((req) => `<li>${escapeHtml(req)}</li>`)
-      .join("");
+    const valuesString = values.join(",");
 
     const chartUrl =
       `${process.env.APP_BASE_URL}/api/generate-chart?values=${encodeURIComponent(
-        values.join(",")
+        valuesString
       )}&v=${Date.now()}`;
 
-    const prompt = `
-Erstelle eine personalisierte Auswertung eines Meal-Prep-Tests.
-
-Schreibe ausschließlich in der Du-Form und verwende einen lockeren, wertschätzenden und motivierenden Ton. Die Sprache soll natürlich, klar und nahbar sein. Vermeide Fachjargon, Floskeln, Emojis und übertriebene Werbesprache.
-
-WICHTIG:
-Die Auswertung soll aus genau drei klar getrennten Absätzen bestehen.
-
-Absatz 1:
-Beschreibe, wie sich der Essensalltag aktuell zeigt. Gib eine übergeordnete Einordnung des Alltags, der Gewohnheiten und der Rahmenbedingungen. Dieser Absatz gehört in die Kategorie „So zeigt sich dein Essensalltag“.
-
-Absatz 2:
-Beschreibe ausschließlich, was bereits gut funktioniert. Hebe vorhandene Stärken, hilfreiche Gewohnheiten, Ressourcen und förderliche Voraussetzungen hervor. Dieser Absatz gehört in die Kategorie „Was bereits gut funktioniert“.
-
-Absatz 3:
-Beschreibe ausschließlich, was den Alltag aktuell besonders fordert oder erschwert. Formuliere dabei wertschätzend und ohne negative oder abwertende Begriffe. Dieser Absatz gehört in die Kategorie „Was dich aktuell besonders fordert“.
-
-WICHTIG:
-Die Auswertung darf ausschließlich Herausforderungen, Bedürfnisse und Anforderungen beschreiben. Es dürfen keine konkreten Lösungen, Strategien, Rezepte oder Handlungsempfehlungen genannt werden.
-
-Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist, sondern zu den persönlichen Bedürfnissen und zum Alltag passen muss.
-
-Verwende nach Möglichkeit Begriffe wie:
-„flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“ und „umsetzbar“.
-
-Vermeide negativ konnotierte oder wertende Begriffe wie:
-„fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
-
-Formuliere stattdessen verständlich, empathisch und unterstützend.
-
-Der Text soll zwischen 120 und 180 Wörtern umfassen.
-
-Name: ${name}
-
-Ergebnisse der neun Dimensionen:
-${valuesToContext(values)}
-`;
-
-    let analysisParagraphs = [
-      "Deine Auswertung konnte leider nicht erstellt werden.",
-      "",
-      "",
-    ];
-
-    try {
-      const openaiResponse = await fetch(
-        "https://api.openai.com/v1/responses",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4.1",
-            input: prompt,
-          }),
-        }
-      );
-
-      const openaiResult = await openaiResponse.json();
-      const analysisText = extractOpenAIText(openaiResult);
-
-      if (openaiResponse.ok && analysisText) {
-        analysisParagraphs = splitIntoThreeParagraphs(analysisText);
-      }
-    } catch (error) {
-      console.error("Fehler bei OpenAI:", error);
-    }
+    const analysisApiUrl =
+      `${process.env.APP_BASE_URL}/api/result-analysis` +
+      `?name=${encodeURIComponent(name)}` +
+      `&values=${encodeURIComponent(valuesString)}`;
 
     const selfUrl =
       `${process.env.APP_BASE_URL}/api/result-page` +
       `?name=${encodeURIComponent(name)}` +
-      `&values=${encodeURIComponent(values.join(","))}` +
+      `&values=${encodeURIComponent(valuesString)}` +
       `&calendly=${encodeURIComponent(calendly)}`;
 
     const html = `
@@ -387,6 +168,10 @@ ${valuesToContext(values)}
     padding-left: 20px;
   }
 
+  .loading {
+    color: #666666;
+  }
+
   .cta-block {
     margin-top: 34px;
   }
@@ -440,45 +225,37 @@ ${valuesToContext(values)}
           <div class="accordion-item">
             <button class="accordion-button">So zeigt sich dein Essensalltag</button>
             <div class="accordion-content">
-              <p>${escapeHtml(analysisParagraphs[0] || "")}</p>
+              <p id="section-essensalltag" class="loading">Deine Auswertung wird geladen ...</p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was bereits gut funktioniert</button>
             <div class="accordion-content">
-              <p>${escapeHtml(analysisParagraphs[1] || "")}</p>
+              <p id="section-funktioniert" class="loading">Deine Auswertung wird geladen ...</p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was dich aktuell besonders fordert</button>
             <div class="accordion-content">
-              <p>${escapeHtml(analysisParagraphs[2] || "")}</p>
+              <p id="section-fordert" class="loading">Deine Auswertung wird geladen ...</p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was deine Meal-Prep-Methode leisten sollte</button>
             <div class="accordion-content">
-              <p>
-                Aus deiner Auswertung wird deutlich, dass eine passende Meal-Prep-Methode bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:
-              </p>
-              <ul>
-                ${requirementsHtml}
-              </ul>
-              <p>
-                Genau daran zeigt sich, wie wichtig eine Herangehensweise ist, die wirklich zu deinen Rahmenbedingungen passt.
-              </p>
+              <p id="requirements-intro" class="loading">Deine Auswertung wird geladen ...</p>
+              <ul id="requirements-list"></ul>
+              <p id="requirements-outro"></p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was eher nicht zu dir passt</button>
             <div class="accordion-content">
-              <p>
-                Standardisierte Meal-Prep-Pläne aus Social Media berücksichtigen häufig nicht die individuellen Anforderungen deines Alltags. Dein Ergebnis zeigt, dass pauschale Lösungen langfristig nicht die gewünschte Entlastung bringen. Stattdessen braucht es eine Herangehensweise, die zu deiner persönlichen Situation passt.
-              </p>
+              <p id="section-notfits" class="loading">Deine Auswertung wird geladen ...</p>
             </div>
           </div>
         </div>
@@ -523,15 +300,70 @@ ${valuesToContext(values)}
       content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
     });
   });
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = value || "";
+    el.classList.remove("loading");
+  }
+
+  async function loadAnalysis() {
+    try {
+      const response = await fetch(${JSON.stringify(analysisApiUrl)}, {
+        cache: "no-store"
+      });
+
+      const data = await response.json();
+
+      setText("section-essensalltag", data.essensalltag || "");
+      setText("section-funktioniert", data.funktioniert || "");
+      setText("section-fordert", data.fordert || "");
+      setText("section-notfits", data.notFits || "");
+
+      const intro = document.getElementById("requirements-intro");
+      const list = document.getElementById("requirements-list");
+      const outro = document.getElementById("requirements-outro");
+
+      if (intro) {
+        intro.textContent =
+          "Aus deiner Auswertung wird deutlich, dass eine passende Meal-Prep-Methode bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:";
+        intro.classList.remove("loading");
+      }
+
+      if (list) {
+        list.innerHTML = "";
+        (data.requirements || []).forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          list.appendChild(li);
+        });
+      }
+
+      if (outro) {
+        outro.textContent =
+          "Genau daran zeigt sich, wie wichtig eine Herangehensweise ist, die wirklich zu deinen Rahmenbedingungen passt.";
+      }
+    } catch (error) {
+      setText("section-essensalltag", "Deine Auswertung konnte leider nicht geladen werden.");
+      setText("section-funktioniert", "");
+      setText("section-fordert", "");
+      setText("section-notfits", "");
+      setText("requirements-intro", "Die Anforderungen konnten leider nicht geladen werden.");
+    }
+  }
+
+  loadAnalysis();
 </script>
 </body>
 </html>
 `;
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
     res.status(200).send(html);
   } catch (error) {
-    console.error("Fehler:", error);
+    console.error("Fehler in /api/result-page:", error);
     res.status(500).send("Fehler beim Laden der Ergebnis-Seite.");
   }
 }
