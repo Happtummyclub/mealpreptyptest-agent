@@ -151,40 +151,46 @@ export default async function handler(req, res) {
       `&calendly=${encodeURIComponent(calendlyUrl)}`;
 
     const resultHtml = `
-      <div style="background-color:#f9f6f8;padding:40px 20px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
-          Mehr Struktur und Entlastung für deinen Alltag.
-        </div>
-
-        <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06);">
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dein persönliches Meal Prep Profil</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f9f6f8;font-family:Montserrat,Arial,Helvetica,sans-serif;color:#333333;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f9f6f8;margin:0;padding:0;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
           <tr>
-            <td style="background-color:#d7afc7;color:#333333;text-align:center;padding:28px 24px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
-              <h1 style="margin:0;font-size:26px;font-weight:700;color:#333333;">Happy Tummy Club</h1>
-              <p style="margin:8px 0 0;font-size:14px;font-weight:500;color:#333333;">Dein persönliches Meal Prep Profil</p>
+            <td align="center" style="background-color:#d7afc7;padding:28px 24px;">
+              <div style="font-size:26px;line-height:1.2;font-weight:700;color:#333333;">Happy Tummy Club</div>
+              <div style="margin-top:8px;font-size:14px;line-height:1.4;font-weight:500;color:#333333;">Dein persönliches Meal Prep Profil</div>
             </td>
           </tr>
 
           <tr>
-            <td style="padding:32px 30px;color:#333333;line-height:1.7;font-size:16px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
-              <p style="margin-top:0;">Hi ${parsed.vorname || "du"},</p>
+            <td style="padding:32px 30px;font-size:16px;line-height:1.7;color:#333333;">
+              <p style="margin:0 0 16px 0;">Hi ${parsed.vorname || "du"},</p>
 
-              <p>
+              <p style="margin:0 0 16px 0;">
                 schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge. Dein persönliches Meal Prep Profil hilft dir, jetzt auch den zweiten Schritt zu gehen. Schau direkt rein und starte dein Meal Prep Game!
               </p>
 
-              <div style="text-align:left;margin:24px 0 8px 0;">
-                <a
-                  href="${resultPageUrl}"
-                  target="_blank"
-                  style="display:inline-block;background-color:#d7afc7;color:#333333;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px;font-family:'Montserrat',Arial,Helvetica,sans-serif;"
-                >
-                  Dein persönliches Meal Prep Profil ansehen
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 20px 0;">
+                <tr>
+                  <td align="center" bgcolor="#d7afc7" style="border-radius:10px;">
+                    <a href="${resultPageUrl}" target="_blank" style="display:inline-block;padding:14px 22px;font-size:16px;line-height:1.2;font-weight:700;color:#333333;text-decoration:none;font-family:Montserrat,Arial,Helvetica,sans-serif;">
+                      Dein persönliches Meal Prep Profil ansehen
+                    </a>
+                  </td>
+                </tr>
+              </table>
 
-              <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
+              <p style="margin:0 0 16px 0;">Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
 
-              <p style="margin-top:24px;margin-bottom:0;">
+              <p style="margin:24px 0 0 0;">
                 Viele Grüße,<br>
                 Samia vom Happy Tummy Club
               </p>
@@ -192,12 +198,16 @@ export default async function handler(req, res) {
           </tr>
 
           <tr>
-            <td style="background:#f4f4f4;text-align:center;padding:16px;font-size:12px;color:#777777;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
+            <td align="center" style="background-color:#f4f4f4;padding:16px;font-size:12px;line-height:1.4;color:#777777;">
               © ${new Date().getFullYear()} Happy Tummy Club
             </td>
           </tr>
         </table>
-      </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `;
 
     await sendBrevoEmail({
