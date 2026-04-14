@@ -143,11 +143,13 @@ export default async function handler(req, res) {
 
     const chartValues = buildChartValues(parsed);
 
+    const calendlyUrl = "https://calendly.com/DEIN-LINK";
+
     const resultPageUrl =
       `${process.env.APP_BASE_URL}/api/result-page` +
       `?name=${encodeURIComponent(parsed.vorname || "du")}` +
       `&values=${encodeURIComponent(chartValues)}` +
-      `&calendly=${encodeURIComponent("https://calendly.com/DEIN-LINK")}`;
+      `&calendly=${encodeURIComponent(calendlyUrl)}`;
 
     const resultHtml = `
       <div style="background-color:#f9f6f8;padding:40px 20px;font-family:'Montserrat',Arial,Helvetica,sans-serif;">
@@ -168,17 +170,17 @@ export default async function handler(req, res) {
               <p style="margin-top:0;">Hi ${parsed.vorname || "du"},</p>
 
               <p>
-                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge.
+                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge. Dein Meal Prep Profil hilft dir den nächsten Schritt zu machen.
               </p>
 
               <p>
-                Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
+                Du möchtest tiefer in deine Ergebnisse einsteigen und herausfinden, wie du deine ganz persönliche Methode für dein Meal Prep findest? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
               </p>
 
               <p>
                 <strong>Kostenloses Startgespräch buchen</strong><br>
-                <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
-                  https://calendly.com/DEIN-LINK
+                <a href="${calendlyUrl}" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
+                  ${calendlyUrl}
                 </a>
               </p>
 
