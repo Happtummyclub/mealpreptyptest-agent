@@ -7,6 +7,28 @@ function escapeHtml(str = "") {
     .replaceAll("'", "&#39;");
 }
 
+async function fetchAnalysis(apiUrl) {
+  try {
+    const response = await fetch(apiUrl, { cache: "no-store" });
+    const data = await response.json();
+    return {
+      essensalltag: data.essensalltag || "Deine Auswertung konnte leider nicht geladen werden.",
+      funktioniert: data.funktioniert || "",
+      fordert: data.fordert || "",
+      requirements: Array.isArray(data.requirements) ? data.requirements : [],
+      notFits: data.notFits || "",
+    };
+  } catch (error) {
+    return {
+      essensalltag: "Deine Auswertung konnte leider nicht geladen werden.",
+      funktioniert: "",
+      fordert: "",
+      requirements: [],
+      notFits: "",
+    };
+  }
+}
+
 export default async function handler(req, res) {
   try {
     const name = req.query.name ? String(req.query.name) : "du";
@@ -36,6 +58,12 @@ export default async function handler(req, res) {
       `${process.env.APP_BASE_URL}/api/result-analysis` +
       `?name=${encodeURIComponent(name)}` +
       `&values=${encodeURIComponent(valuesString)}`;
+
+    const analysis = await fetchAnalysis(analysisApiUrl);
+
+    const requirementsHtml = analysis.requirements
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join("");
 
     const html = `
 <!DOCTYPE html>
@@ -162,10 +190,6 @@ export default async function handler(req, res) {
     padding-left: 20px;
   }
 
-  .loading {
-    color: #666666;
-  }
-
   .cta-block {
     margin-top: 34px;
   }
@@ -215,37 +239,43 @@ export default async function handler(req, res) {
           <div class="accordion-item">
             <button class="accordion-button">So zeigt sich dein Essensalltag</button>
             <div class="accordion-content">
-              <p id="section-essensalltag" class="loading">Deine Auswertung wird geladen ...</p>
+              <p>${escapeHtml(analysis.essensalltag)}</p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was bereits gut funktioniert</button>
             <div class="accordion-content">
-              <p id="section-funktioniert" class="loading">Deine Auswertung wird geladen ...</p>
+              <p>${escapeHtml(analysis.funktioniert)}</p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was dich aktuell besonders fordert</button>
             <div class="accordion-content">
-              <p id="section-fordert" class="loading">Deine Auswertung wird geladen ...</p>
+              <p>${escapeHtml(analysis.fordert)}</p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was deine Meal-Prep-Methode leisten sollte</button>
             <div class="accordion-content">
-              <p id="requirements-intro" class="loading">Deine Auswertung wird geladen ...</p>
-              <ul id="requirements-list"></ul>
-              <p id="requirements-outro"></p>
+              <p>
+                Aus deiner Auswertung wird deutlich, dass eine passende Meal-Prep-Methode bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:
+              </p>
+              <ul>
+                ${requirementsHtml}
+              </ul>
+              <p>
+                Genau daran zeigt sich, wie wichtig eine Herangehensweise ist, die wirklich zu deinen Rahmenbedingungen passt.
+              </p>
             </div>
           </div>
 
           <div class="accordion-item">
             <button class="accordion-button">Was eher nicht zu dir passt</button>
             <div class="accordion-content">
-              <p id="section-notfits" class="loading">Deine Auswertung wird geladen ...</p>
+              <p>${escapeHtml(analysis.notFits)}</p>
             </div>
           </div>
         </div>
@@ -283,60 +313,6 @@ export default async function handler(req, res) {
       content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
     });
   });
-
-  function setText(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = value || "";
-    el.classList.remove("loading");
-  }
-
-  async function loadAnalysis() {
-    try {
-      const response = await fetch(${JSON.stringify(analysisApiUrl)}, {
-        cache: "no-store"
-      });
-
-      const data = await response.json();
-
-      setText("section-essensalltag", data.essensalltag || "");
-      setText("section-funktioniert", data.funktioniert || "");
-      setText("section-fordert", data.fordert || "");
-      setText("section-notfits", data.notFits || "");
-
-      const intro = document.getElementById("requirements-intro");
-      const list = document.getElementById("requirements-list");
-      const outro = document.getElementById("requirements-outro");
-
-      if (intro) {
-        intro.textContent =
-          "Aus deiner Auswertung wird deutlich, dass eine passende Meal-Prep-Methode bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:";
-        intro.classList.remove("loading");
-      }
-
-      if (list) {
-        list.innerHTML = "";
-        (data.requirements || []).forEach((item) => {
-          const li = document.createElement("li");
-          li.textContent = item;
-          list.appendChild(li);
-        });
-      }
-
-      if (outro) {
-        outro.textContent =
-          "Genau daran zeigt sich, wie wichtig eine Herangehensweise ist, die wirklich zu deinen Rahmenbedingungen passt.";
-      }
-    } catch (error) {
-      setText("section-essensalltag", "Deine Auswertung konnte leider nicht geladen werden.");
-      setText("section-funktioniert", "");
-      setText("section-fordert", "");
-      setText("section-notfits", "");
-      setText("requirements-intro", "Die Anforderungen konnten leider nicht geladen werden.");
-    }
-  }
-
-  loadAnalysis();
 </script>
 </body>
 </html>
