@@ -107,12 +107,6 @@ export default async function handler(req, res) {
     font-weight: 700;
   }
 
-  .header p {
-    margin: 6px 0 0 0;
-    font-size: 14px;
-    font-weight: 500;
-  }
-
   .content {
     padding: 35px;
     line-height: 1.75;
@@ -222,8 +216,7 @@ export default async function handler(req, res) {
     <div class="card">
 
       <div class="header">
-        <h1>Happy Tummy Club</h1>
-        <p>Dein persönliches Meal Prep Profil</p>
+        <h1>Hallo, ${escapeHtml(name)}</h1>
       </div>
 
       <div class="content">
