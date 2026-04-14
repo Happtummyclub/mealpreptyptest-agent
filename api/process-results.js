@@ -142,7 +142,6 @@ export default async function handler(req, res) {
     }
 
     const chartValues = buildChartValues(parsed);
-
     const calendlyUrl = "https://calendly.com/DEIN-LINK";
 
     const resultPageUrl =
@@ -170,18 +169,7 @@ export default async function handler(req, res) {
               <p style="margin-top:0;">Hi ${parsed.vorname || "du"},</p>
 
               <p>
-                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge. Dein Meal Prep Profil hilft dir den nächsten Schritt zu machen.
-              </p>
-
-              <p>
-                Du möchtest tiefer in deine Ergebnisse einsteigen und herausfinden, wie du deine ganz persönliche Methode für dein Meal Prep findest? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
-              </p>
-
-              <p>
-                <strong>Kostenloses Startgespräch buchen</strong><br>
-                <a href="${calendlyUrl}" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
-                  ${calendlyUrl}
-                </a>
+                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge. Dein persönliches Meal Prep Profil hilft dir, jetzt auch den zweiten Schritt zu gehen. Schau direkt rein und starte dein Meal Prep Game!
               </p>
 
               <p>
@@ -190,19 +178,11 @@ export default async function handler(req, res) {
                 </a>
               </p>
 
-              <p>
-                Sollte einer der Links nicht funktionieren, kannst du dein Ergebnis auch direkt hier aufrufen:<br>
-                <a href="${resultPageUrl}" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
-                  Dein persönliches Profil
-                </a>
-              </p>
-
               <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
 
               <p style="margin-top:24px;margin-bottom:0;">
-                Liebe Grüße<br>
-                Samia Tömen<br>
-                Happy Tummy Club
+                Viele Grüße,<br>
+                Samia vom Happy Tummy Club
               </p>
             </td>
           </tr>
