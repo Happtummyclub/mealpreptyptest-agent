@@ -172,11 +172,15 @@ export default async function handler(req, res) {
                 schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge. Dein persönliches Meal Prep Profil hilft dir, jetzt auch den zweiten Schritt zu gehen. Schau direkt rein und starte dein Meal Prep Game!
               </p>
 
-              <p>
-                <a href="${resultPageUrl}" target="_blank" style="color:#f05808;font-weight:700;text-decoration:underline;">
+              <div style="text-align:left;margin:24px 0 8px 0;">
+                <a
+                  href="${resultPageUrl}"
+                  target="_blank"
+                  style="display:inline-block;background-color:#d7afc7;color:#333333;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px;font-family:'Montserrat',Arial,Helvetica,sans-serif;"
+                >
                   Dein persönliches Meal Prep Profil ansehen
                 </a>
-              </p>
+              </div>
 
               <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
 
