@@ -174,52 +174,50 @@ export default async function handler(req, res) {
     console.log("Starte OpenAI-Auswertung für:", parsed.email);
 
     const prompt = `
-Hier sind die Antworten aus dem Meal Prep Test:
+Erstelle eine personalisierte Analyse des Essensalltags basierend auf den Ergebnissen eines Meal-Prep-Tests.
 
-Alltagsdynamik: ${parsed.alltagsdynamik}
-Mental Load: ${parsed.mental_load}
-Motivation: ${parsed.motivation}
-Zeit: ${parsed.zeit}
-Ernährungsorientierung: ${parsed.ernaehrungsorientierung}
-Kochverhalten: ${parsed.kochverhalten}
-Abwechslungsbedarf: ${parsed.abwechslungsbedarf}
-Planänderungen: ${parsed.planaenderungen}
-Einkauf: ${parsed.einkauf}
-Kühlschrank: ${parsed.kuehlschrank}
-Gefrierschrank: ${parsed.gefrierschrank}
+Schreibe ausschließlich in der Du-Form und verwende einen wertschätzenden, stärkenorientierten und motivierenden Ton. Die Sprache soll klar, nahbar, professionell und alltagstauglich sein. Vermeide Fachjargon, Floskeln, Emojis und übertriebene Werbesprache.
 
-Deine Aufgabe:
-Analysiere den Essensalltag dieser Person und erstelle eine strukturierte Auswertung.
+Ziel der Analyse ist es, der Person zu helfen, ihren Essensalltag besser zu verstehen und einzuordnen. Zeige auf, was bereits gut funktioniert, welche Herausforderungen bestehen und wo Potenziale für mehr Struktur, Entlastung und Wohlbefinden liegen.
 
-WICHTIG:
-- Du lieferst KEINE Lösung und KEIN fertiges System.
-- Du analysierst nur Alltag, Herausforderungen und Anforderungen.
-- Fokus liegt auf Verständnis, nicht auf Umsetzung.
-- Schreibe in deutscher Sprache.
-- Schreibe als gut lesbares HTML-FRAGMENT.
-- Verwende NUR diese HTML-Tags: h3, p, ul, li, strong.
-- KEIN markdown.
-- KEINE Sternchenformatierung.
-- KEIN html, body, table oder div.
+Betone, dass Meal Prep keine „One-Size-Fits-All“-Lösung ist. Eine individuelle, flexible und nachhaltige Strategie ist entscheidend, um langfristig eine alltagstaugliche und umsetzbare Lösung zu entwickeln.
 
-Die Sektionen müssen genau diese sein:
-1. Einordnung der Situation
-2. Emotionaler Spiegel
-3. Zentrale Herausforderungen
-4. Anforderungen an ein funktionierendes System
-5. Was eher nicht funktioniert
-6. Überleitung
-7. Call to Action
+Die Analyse soll:
+- die wichtigsten Erkenntnisse aus den Testergebnissen zusammenfassen,
+- den persönlichen Alltag realistisch widerspiegeln,
+- Stärken und Entwicklungspotenziale aufzeigen,
+- Orientierung geben und Selbstwirksamkeit fördern,
+- als Grundlage für eine passende Meal-Prep-Strategie dienen.
 
-Ton:
-- ruhig
-- verständlich
-- nicht verkäuferisch
-- alltagsnah
-- keine Fachbegriffe
+Strukturiere den Text in drei Absätze:
+1. Einordnung des aktuellen Essensalltags,
+2. zentrale Stärken und Herausforderungen,
+3. Potenziale und Ausblick.
 
-Länge:
-ca. 300–500 Wörter.
+Verwende nach Möglichkeit Begriffe wie:
+„flexibel“, „alltagstauglich“, „individuell“, „strukturiert“, „entlastend“, „nachhaltig“, „klar“, „umsetzbar“ und „selbstfürsorglich“.
+
+Vermeide negativ konnotierte oder wertende Begriffe wie:
+„fehlende Motivation“, „keine Lust“, „Widerstand“, „Defizit“, „Schwäche“, „Überforderung“, „Problem“, „Versagen“, „Disziplinmangel“, „unorganisiert“ oder „faul“.
+
+Formuliere stattdessen neutral und unterstützend. Stelle Herausforderungen als Entwicklungsmöglichkeiten dar und vermittle Zuversicht, Klarheit und Selbstwirksamkeit.
+
+Der Text soll zwischen 120 und 180 Wörtern umfassen.
+
+Hier sind die Ergebnisse:
+
+Name: ${parsed.vorname || ""}
+
+Ergebnisse der neun Dimensionen:
+- Alltagsdynamik: ${parsed.alltagsdynamik}
+- Mental Load: ${parsed.mental_load}
+- Motivation: ${parsed.motivation}
+- Zeit: ${parsed.zeit}
+- Ernährungsorientierung: ${parsed.ernaehrungsorientierung}
+- Kochverhalten: ${parsed.kochverhalten}
+- Abwechslungsbedarf: ${parsed.abwechslungsbedarf}
+- Einkauf: ${parsed.einkauf}
+- Umgang mit Planänderungen: ${parsed.planaenderungen}
 `;
 
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -245,10 +243,17 @@ ca. 300–500 Wörter.
       };
 
       auswertungHtml = `
-        <h3>Auswertung konnte nicht erstellt werden</h3>
         <p>Deine Auswertung konnte leider nicht erstellt werden.</p>
         <p><strong>Debug-Info:</strong></p>
         <p>${JSON.stringify(debugInfo)}</p>
+      `;
+    } else {
+      auswertungHtml = `
+        <p>${auswertungHtml
+          .split("\n")
+          .filter(Boolean)
+          .map((paragraph) => paragraph.trim())
+          .join("</p><p>")}</p>
       `;
     }
 
@@ -258,16 +263,8 @@ ca. 300–500 Wörter.
     const chartUrl = `${process.env.APP_BASE_URL}/api/generate-chart?values=${encodeURIComponent(chartValues)}&v=${Date.now()}`;
 
     const meaningHtml = `
-      <p>
-        Deine Ergebnisse zeigen, welche Anforderungen eine passende Meal-Prep-Methode
-        erfüllen sollte. Entscheidend ist ein Ansatz, der sich flexibel in deinen Alltag
-        integrieren lässt und dich nachhaltig entlastet.
-      </p>
-      <p>
-        Im nächsten Schritt schauen wir gemeinsam, wie du eine Struktur entwickeln kannst,
-        die wirklich zu dir und deinen Bedürfnissen passt – alltagstauglich, individuell
-        und langfristig umsetzbar.
-      </p>
+      <p>Deine Ergebnisse zeigen, welche Anforderungen eine passende Meal-Prep-Methode erfüllen sollte. Entscheidend ist ein Ansatz, der sich flexibel in deinen Alltag integrieren lässt und dich nachhaltig entlastet.</p>
+      <p>Im nächsten Schritt schauen wir gemeinsam, wie du eine Struktur entwickeln kannst, die wirklich zu dir und deinen Bedürfnissen passt – alltagstauglich, individuell und langfristig umsetzbar.</p>
     `;
 
     const resultPageUrl = `${process.env.APP_BASE_URL}/api/result-page?name=${encodeURIComponent(
@@ -281,7 +278,6 @@ ca. 300–500 Wörter.
     const resultHtml = `
       <div style="background-color:#f4f7f6;padding:40px 20px;font-family:Arial,Helvetica,sans-serif;">
         <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06);">
-          
           <tr>
             <td style="background-color:#6B8E23;color:#ffffff;text-align:center;padding:28px 24px;">
               <h1 style="margin:0;font-size:26px;">Happy Tummy Club</h1>
@@ -294,32 +290,45 @@ ca. 300–500 Wörter.
               <p>Hi ${parsed.vorname || "du"},</p>
 
               <p>
-                deine persönliche Auswertung ist fertig. Über den folgenden Button kannst du
-                dein individuelles Meal Prep Profil inklusive Grafik und Analyse ansehen.
+                schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge.
+                Dein persönliches Ergebnis ist jetzt für dich verfügbar.
               </p>
 
-              <div style="text-align:center;margin:32px 0;">
-                <a href="${resultPageUrl}" target="_blank"
-                   style="background-color:#6B8E23;color:#ffffff;text-decoration:none;padding:14px 26px;border-radius:8px;font-weight:bold;display:inline-block;">
-                  Dein Ergebnis ansehen
+              <p>
+                👉 <strong>Hier findest du dein persönliches Ergebnis:</strong><br>
+                <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
+                  Dein persönliches Meal Prep Profil ansehen
                 </a>
-              </div>
-
-              <p>
-                Falls der Button nicht funktioniert, kannst du dein Ergebnis auch direkt hier öffnen:
               </p>
 
               <p>
+                Möchtest du tiefer in deine Ergebnisse eintauchen? Gerne! Buche dir ein kostenloses Orientierungsgespräch
+                und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal
+                Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele
+                erreichst – strukturiert und in deinem eigenen Tempo.
+              </p>
+
+              <p>
+                👉 <strong>Kostenloses Startgespräch buchen</strong><br>
+                <a href="https://calendly.com/DEIN-LINK" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
+                  https://calendly.com/DEIN-LINK
+                </a>
+              </p>
+
+              <p>
+                Sollte einer der Links nicht funktionieren, kannst du dein Ergebnis auch direkt hier aufrufen:<br>
+                <strong>Dein persönliches Profil:</strong>
                 <a href="${resultPageUrl}" target="_blank" style="color:#6B8E23;font-weight:bold;text-decoration:underline;">
                   Dein persönliches Profil
                 </a>
               </p>
 
-              <p>Ich freue mich auf Dich!</p>
+              <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung :)</p>
 
               <p style="margin-top:24px;">
                 Liebe Grüße<br>
-                <strong>Samia vom Happy Tummy Club</strong>
+                Samia Tömen<br>
+                Happy Tummy Club
               </p>
             </td>
           </tr>
@@ -347,7 +356,7 @@ ca. 300–500 Wörter.
       message: "Ergebnis verarbeitet und Mail gesendet.",
     });
   } catch (error) {
-    console.error("Fehler in /api/process-results:", error);
+    console.error("Fehler in /api/process-result:", error);
 
     return res.status(500).json({
       success: false,
