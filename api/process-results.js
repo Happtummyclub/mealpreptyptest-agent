@@ -4,7 +4,13 @@ export const config = {
   },
 };
 
-async function sendBrevoEmail({ toEmail, toName, subject, htmlContent, textContent }) {
+async function sendBrevoEmail({
+  toEmail,
+  toName,
+  subject,
+  htmlContent,
+  textContent,
+}) {
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -32,7 +38,9 @@ async function sendBrevoEmail({ toEmail, toName, subject, htmlContent, textConte
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(`Brevo error ${response.status}: ${JSON.stringify(result)}`);
+    throw new Error(
+      `Brevo error ${response.status}: ${JSON.stringify(result)}`
+    );
   }
 
   return result;
@@ -40,22 +48,38 @@ async function sendBrevoEmail({ toEmail, toName, subject, htmlContent, textConte
 
 function scoreAlltagsdynamik(value) {
   if (value === "Meine Wochen sind meist ähnlich und gut planbar") return 1;
-  if (value === "Es gibt Struktur aber auch immer wieder Planänderungen") return 3;
+  if (
+    value ===
+    "Es gibt Struktur aber auch immer wieder Planänderungen"
+  )
+    return 3;
   if (value === "Mein Alltag ist eher unvorhersehbar") return 5;
   return 3;
 }
 
 function scoreMentalLoad(value) {
   if (value === "Kaum - ich entscheide das eher spontan") return 1;
-  if (value === "Ein bisschen - etwas Vorbereitung muss sein") return 3;
-  if (value === "Sehr viel - ich muss ständig planen oder für andere mitdenken") return 5;
+  if (
+    value ===
+    "Ein bisschen - etwas Vorbereitung muss sein"
+  )
+    return 3;
+  if (
+    value ===
+    "Sehr viel - ich muss ständig planen oder für andere mitdenken"
+  )
+    return 5;
   return 3;
 }
 
 function scoreMotivation(value) {
   if (value === "Meist genug Motivation um etwas zu kochen") return 1;
   if (value === "Das ist unterschiedlich") return 3;
-  if (value === "Meist wenig Motivation – ich brauche schnelle Lösungen") return 5;
+  if (
+    value ===
+    "Meist wenig Motivation – ich brauche schnelle Lösungen"
+  )
+    return 5;
   return 3;
 }
 
@@ -67,37 +91,81 @@ function scoreZeit(value) {
 }
 
 function scoreErnaehrungsorientierung(value) {
-  if (value === "Eher weniger wichtig - Hauptsache ich werde satt") return 1;
-  if (value === "Es ist mir wichtig aber nicht mein Hauptfokus") return 3;
-  if (value === "Ernährung ist ein wichtiger Faktor für mein Wohlbefinden") return 5;
+  if (
+    value ===
+    "Eher weniger wichtig - Hauptsache ich werde satt"
+  )
+    return 1;
+  if (
+    value ===
+    "Es ist mir wichtig aber nicht mein Hauptfokus"
+  )
+    return 3;
+  if (
+    value ===
+    "Ernährung ist ein wichtiger Faktor für mein Wohlbefinden"
+  )
+    return 5;
   return 3;
 }
 
 function scoreKochverhalten(value) {
   if (value === "Ich koche selten bis gar nicht") return 1;
-  if (value === "Ich koche eher selten dafür größere Mengen für mehrere Tage") return 3;
+  if (
+    value ===
+    "Ich koche eher selten dafür größere Mengen für mehrere Tage"
+  )
+    return 3;
   if (value === "Ich koche häufiger frisch") return 5;
   return 3;
 }
 
 function scoreAbwechslungsbedarf(value) {
-  if (value === "Wiederholungen sind für mich völlig in Ordnung") return 1;
-  if (value === "Ein bisschen Abwechslung ist mir wichtig") return 3;
-  if (value === "Ich möchte möglichst keine Wiederholungen") return 5;
+  if (
+    value ===
+    "Wiederholungen sind für mich völlig in Ordnung"
+  )
+    return 1;
+  if (
+    value ===
+    "Ein bisschen Abwechslung ist mir wichtig"
+  )
+    return 3;
+  if (
+    value ===
+    "Ich möchte möglichst keine Wiederholungen"
+  )
+    return 5;
   return 3;
 }
 
 function scoreEinkauf(value) {
   if (value === "Meist nur einmal pro Woche") return 1;
-  if (value === "Zwei- bis dreimal pro Woche ist realistisch") return 3;
-  if (value === "Ich kann relativ flexibel nach Bedarf einkaufen") return 5;
+  if (
+    value ===
+    "Zwei- bis dreimal pro Woche ist realistisch"
+  )
+    return 3;
+  if (
+    value ===
+    "Ich kann relativ flexibel nach Bedarf einkaufen"
+  )
+    return 5;
   return 3;
 }
 
 function scorePlanaenderungen(value) {
   if (value === "Das passiert selten") return 1;
-  if (value === "Ich passe mich an und verschiebe Mahlzeiten") return 3;
-  if (value === "Ich greife dann eher zu einer schnell verfügbaren Lösung") return 5;
+  if (
+    value ===
+    "Ich passe mich an und verschiebe Mahlzeiten"
+  )
+    return 3;
+  if (
+    value ===
+    "Ich greife dann eher zu einer schnell verfügbaren Lösung"
+  )
+    return 5;
   return 3;
 }
 
@@ -152,6 +220,7 @@ export default async function handler(req, res) {
     }
 
     const chartValues = buildChartValues(parsed);
+
     const calendlyUrl = "https://calendly.com/DEIN-LINK";
 
     const resultPageUrl =
@@ -175,7 +244,9 @@ export default async function handler(req, res) {
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;">
         <tr>
           <td align="center" style="background:#d7afc7;padding:24px;">
-            <h1 style="margin:0;font-size:24px;color:#333333;font-family:Arial,Helvetica,sans-serif;">Happy Tummy Club</h1>
+            <h1 style="margin:0;font-size:24px;color:#333333;font-family:Arial,Helvetica,sans-serif;">
+              Happy Tummy Club
+            </h1>
             <p style="margin:6px 0 0 0;font-size:14px;color:#333333;font-family:Arial,Helvetica,sans-serif;">
               Dein persönliches Meal Prep Profil
             </p>
@@ -184,21 +255,21 @@ export default async function handler(req, res) {
 
         <tr>
           <td style="padding:32px 28px;font-size:16px;line-height:1.7;color:#333333;font-family:Arial,Helvetica,sans-serif;">
-            <p style="margin:0 0 16px 0;">Hi ${safeName},</p>
+            <p>Hi ${safeName},</p>
 
-            <p style="margin:0 0 16px 0;">
+            <p>
               schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge und einem entspannteren Essensalltag.
             </p>
 
-            <p style="margin:0 0 16px 0;">
+            <p>
               Dein persönliches Meal Prep Profil hilft dir dabei, deine aktuellen Gewohnheiten besser zu verstehen und einzuordnen. Es zeigt dir, welche Faktoren deinen Alltag prägen und welche Anforderungen deine individuelle Meal Prep Routine erfüllen sollte.
             </p>
 
-            <p style="margin:0 0 16px 0;">
+            <p>
               Mit diesen Erkenntnissen legst du die Grundlage für mehr Struktur, Entlastung und Klarheit im Alltag.
             </p>
 
-            <p style="margin:0 0 16px 0;"><strong>Schau direkt rein:</strong></p>
+            <p><strong>Schau direkt rein:</strong></p>
 
             <table cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 24px 0;">
               <tr>
@@ -208,17 +279,17 @@ export default async function handler(req, res) {
                     target="_blank"
                     style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:600;color:#333333;text-decoration:none;font-family:Arial,Helvetica,sans-serif;"
                   >
-                    Dein persönliches Meal Prep Profil ansehen
+                    Dein Meal Prep Profil
                   </a>
                 </td>
               </tr>
             </table>
 
-            <p style="margin:0 0 16px 0;">
+            <p>
               Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.
             </p>
 
-            <p style="margin:24px 0 0 0;">
+            <p>
               Viele Grüße,<br>
               Samia vom Happy Tummy Club
             </p>
@@ -246,7 +317,7 @@ Dein persönliches Meal Prep Profil hilft dir dabei, deine aktuellen Gewohnheite
 
 Mit diesen Erkenntnissen legst du die Grundlage für mehr Struktur, Entlastung und Klarheit im Alltag.
 
-Schau direkt rein:
+Dein Meal Prep Profil:
 ${resultPageUrl}
 
 Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.
