@@ -208,7 +208,7 @@ export default async function handler(req, res) {
                     target="_blank"
                     style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:600;color:#333333;text-decoration:none;font-family:Arial,Helvetica,sans-serif;"
                   >
-                    Kostenloses Startgespräch buchen
+                    Dein persönliches Meal Prep Profil ansehen
                   </a>
                 </td>
               </tr>
