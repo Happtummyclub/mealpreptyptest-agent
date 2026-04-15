@@ -216,7 +216,7 @@ Name: ${name}
 Ergebnisse der neun Dimensionen:
 ${valuesToContext(values)}
 
-Besonders wichtige Anforderungen an eine passende Meal-Prep-Methode:
+Besonders wichtige Anforderungen an eine passende Meal-Prep-Routine:
 ${requirements.map((r) => `- ${r}`).join("\n")}
 `;
 
