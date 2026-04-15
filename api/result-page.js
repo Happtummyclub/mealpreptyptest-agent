@@ -107,18 +107,18 @@ export default async function handler(req, res) {
     font-weight: 700;
   }
 
-  .content {
-    padding: 35px;
-    line-height: 1.75;
-    font-size: 16px;
-  }
-
   h2 {
     color: #f05808;
     margin-top: 40px;
     margin-bottom: 14px;
     font-size: 24px;
     font-weight: 700;
+  }
+
+  .content {
+    padding: 35px;
+    line-height: 1.75;
+    font-size: 16px;
   }
 
   .chart-box {
@@ -184,22 +184,24 @@ export default async function handler(req, res) {
     padding-left: 20px;
   }
 
-  .cta-block {
-    margin-top: 34px;
+  .cta-section {
+    text-align: center;
+    margin-top: 10px;
   }
 
-  .cta-text {
-    margin-bottom: 18px;
-  }
-
-  .cta-link {
-    color: #333333;
-    text-decoration: none;
+  .cta-button {
+    display: inline-block;
+    background-color: #f05808;
+    color: #ffffff;
+    padding: 14px 26px;
+    border-radius: 10px;
     font-weight: 600;
+    text-decoration: none;
+    font-size: 16px;
   }
 
-  .cta-link:hover {
-    text-decoration: underline;
+  .cta-button:hover {
+    opacity: 0.9;
   }
 
   .footer {
@@ -216,7 +218,7 @@ export default async function handler(req, res) {
     <div class="card">
 
       <div class="header">
-        <h1>Hallo, ${escapeHtml(name)}</h1>
+        <h1>Hallo ${escapeHtml(name)}</h1>
       </div>
 
       <div class="content">
@@ -251,10 +253,10 @@ export default async function handler(req, res) {
           </div>
 
           <div class="accordion-item">
-            <button class="accordion-button">Was deine Meal-Prep-Methode leisten sollte</button>
+            <button class="accordion-button">Was deine Meal Prep Routine leisten sollte</button>
             <div class="accordion-content">
               <p>
-                Aus deiner Auswertung wird deutlich, dass eine passende Meal-Prep-Methode bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:
+                Aus deiner Auswertung wird deutlich, dass eine passende Meal Prep Routine bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:
               </p>
               <ul>
                 ${requirementsHtml}
@@ -273,15 +275,16 @@ export default async function handler(req, res) {
           </div>
         </div>
 
-        <div class="cta-block">
-          <p class="cta-text">
-            Du möchtest tiefer in deine Ergebnisse einsteigen und herausfinden, wie du deine ganz persönliche Methode für dein Meal Prep findest? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen. Wir besprechen, wie du Meal Prep alltagstauglich und nachhaltig in dein Leben integrieren kannst und auf welchem Weg du deine Ziele erreichst – strukturiert und in deinem eigenen Tempo.
-          </p>
+        <h2>Deine Meal Prep Routine</h2>
 
-          <p>
-            <strong>Kostenloses Startgespräch buchen</strong><br>
-            <a class="cta-link" href="${escapeHtml(calendly)}" target="_blank">${escapeHtml(calendly)}</a>
-          </p>
+        <p>
+          Du möchtest tiefer in deine Ergebnisse einsteigen und herausfinden, wie du deine ganz persönliche Meal Prep Routine entwickeln kannst? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen.
+        </p>
+
+        <div class="cta-section">
+          <a class="cta-button" href="${escapeHtml(calendly)}" target="_blank">
+            Kostenloses Orientierungsgespräch buchen
+          </a>
         </div>
 
         <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
