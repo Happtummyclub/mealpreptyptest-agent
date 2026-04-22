@@ -32,9 +32,7 @@ async function fetchAnalysis(apiUrl) {
 export default async function handler(req, res) {
   try {
     const name = req.query.name ? String(req.query.name) : "du";
-    const calendly = req.query.calendly
-      ? String(req.query.calendly)
-      : "https://calendly.com/DEIN-LINK";
+    const calendly = "https://calendly.com/happytummyclub/30min";
 
     const values = String(req.query.values || "3,3,3,3,3,3,3,3,3")
       .split(",")
