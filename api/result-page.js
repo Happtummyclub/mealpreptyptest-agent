@@ -49,11 +49,6 @@ export default async function handler(req, res) {
 
     const valuesString = values.join(",");
 
-    const chartUrl =
-      `${process.env.APP_BASE_URL}/api/generate-chart?values=${encodeURIComponent(
-        valuesString
-      )}&v=${Date.now()}`;
-
     const analysisApiUrl =
       `${process.env.APP_BASE_URL}/api/result-analysis` +
       `?name=${encodeURIComponent(name)}` +
@@ -76,7 +71,7 @@ export default async function handler(req, res) {
 <style>
   body {
     margin: 0;
-    background: #f9f6f8;
+    background: #f3f3e6;
     font-family: 'Montserrat', Arial, Helvetica, sans-serif;
     color: #333333;
   }
@@ -95,8 +90,8 @@ export default async function handler(req, res) {
   }
 
   .header {
-    background: #d7afc7;
-    color: #333333;
+    background: #2d5146;
+    color: #ffffff;
     text-align: center;
     padding: 30px 20px;
   }
@@ -108,7 +103,7 @@ export default async function handler(req, res) {
   }
 
   h2 {
-    color: #f05808;
+    color: #3dadff;
     margin-top: 40px;
     margin-bottom: 14px;
     font-size: 24px;
@@ -121,24 +116,12 @@ export default async function handler(req, res) {
     font-size: 16px;
   }
 
-  .chart-box {
-    text-align: center;
-    margin: 26px 0 30px 0;
-  }
-
-  .chart-box img {
-    max-width: 100%;
-    border-radius: 12px;
-    display: block;
-    margin: 0 auto;
-  }
-
   .accordion {
     margin-top: 8px;
   }
 
   .accordion-item {
-    border-bottom: 1px solid #eaddea;
+    border-bottom: 1px solid #d9e0d2;
   }
 
   .accordion-button {
@@ -149,7 +132,7 @@ export default async function handler(req, res) {
     text-align: left;
     font-size: 18px;
     font-weight: 600;
-    color: #f05808;
+    color: #3dadff;
     padding: 16px 0;
     cursor: pointer;
     font-family: 'Montserrat', Arial, Helvetica, sans-serif;
@@ -170,7 +153,7 @@ export default async function handler(req, res) {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
-    background: #faf7f9;
+    background: #fafaf2;
     border-radius: 10px;
     padding: 0 15px;
   }
@@ -191,8 +174,8 @@ export default async function handler(req, res) {
 
   .cta-button {
     display: inline-block;
-    background-color: #f05808;
-    color: #ffffff;
+    background-color: #2d5146;
+    color: #3dadff;
     padding: 14px 26px;
     border-radius: 10px;
     font-weight: 600;
@@ -222,12 +205,6 @@ export default async function handler(req, res) {
       </div>
 
       <div class="content">
-        <h2>Dein Profil auf einen Blick</h2>
-
-        <div class="chart-box">
-          <img src="${chartUrl}" alt="Dein persönliches Meal Prep Profil">
-        </div>
-
         <h2>Deine persönliche Auswertung</h2>
 
         <div class="accordion">
