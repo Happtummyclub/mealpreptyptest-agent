@@ -170,55 +170,91 @@ export default async function handler(req, res) {
 <html lang="de">
 <body style="margin:0;padding:0;background:#f3f3e6;font-family:Arial,Helvetica,sans-serif;color:#333333;">
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f3e6;">
-<tr>
-<td align="center" style="padding:32px 16px;">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td align="center" style="background:#2d5146;padding:24px;">
+            <h1 style="margin:0;font-size:24px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+              Happy Tummy Club
+            </h1>
+            <p style="margin:6px 0 0 0;font-size:14px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+              Dein persönliches Meal Prep Profil
+            </p>
+          </td>
+        </tr>
 
-<tr>
-<td align="center" style="background:#2d5146;padding:24px;">
-<h1 style="margin:0;font-size:24px;color:#ffffff;">Happy Tummy Club</h1>
-<p style="margin:6px 0 0 0;font-size:14px;color:#ffffff;">
-Dein persönliches Meal Prep Profil
-</p>
-</td>
-</tr>
+        <tr>
+          <td style="padding:32px 28px;font-size:16px;line-height:1.7;color:#333333;font-family:Arial,Helvetica,sans-serif;">
+            <p style="margin:0 0 16px 0;">Hi ${safeName},</p>
 
-<tr>
-<td style="padding:32px 28px;font-size:16px;line-height:1.7;">
-<p>Hi ${safeName},</p>
+            <p style="margin:0 0 16px 0;">
+              schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge und einem entspannteren Essensalltag.
+            </p>
 
-<p>schön, dass du dir die Zeit für den Test genommen hast.</p>
+            <p style="margin:0 0 16px 0;">
+              Dein persönliches Meal Prep Profil hilft dir dabei, deine aktuellen Gewohnheiten besser zu verstehen und einzuordnen. Es zeigt dir, welche Faktoren deinen Alltag prägen und welche Anforderungen deine individuelle Meal Prep Routine erfüllen sollte.
+            </p>
 
-<p><strong>Schau direkt rein:</strong></p>
+            <p style="margin:0 0 16px 0;">
+              Mit diesen Erkenntnissen legst du die Grundlage für mehr Struktur, Entlastung und Klarheit im Alltag.
+            </p>
 
-<table style="margin:20px 0;">
-<tr>
-<td align="center" bgcolor="#2d5146" style="border-radius:10px;">
-<a href="${safeUrl}" target="_blank"
-style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;">
-Dein Meal Prep Profil
-</a>
-</td>
-</tr>
-</table>
+            <p style="margin:0 0 16px 0;"><strong>Schau direkt rein:</strong></p>
 
-<p>Viele Grüße,<br>Samia</p>
+            <table cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 24px 0;">
+              <tr>
+                <td align="center" bgcolor="#2d5146" style="border-radius:10px;">
+                  <a
+                    href="${safeUrl}"
+                    target="_blank"
+                    style="display:inline-block;padding:14px 22px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;"
+                  >
+                    Dein Meal Prep Profil
+                  </a>
+                </td>
+              </tr>
+            </table>
 
-</td>
-</tr>
+            <p style="margin:0 0 16px 0;">
+              Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.
+            </p>
 
-</table>
-</td>
-</tr>
+            <p style="margin:24px 0 0 0;">
+              Viele Grüße,<br>
+              Samia vom Happy Tummy Club
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="background:#f4f4f4;padding:16px;font-size:12px;color:#777777;font-family:Arial,Helvetica,sans-serif;">
+            © ${new Date().getFullYear()} Happy Tummy Club
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
 </table>
 </body>
 </html>
-`;
+    `;
 
-    const textContent = `Hi ${safeName},
+    const textContent = `Hi ${parsed.vorname || "du"},
+
+schön, dass du dir die Zeit für den Test genommen hast. Das ist dein erster Schritt zu mehr Selbstfürsorge und einem entspannteren Essensalltag.
+
+Dein persönliches Meal Prep Profil hilft dir dabei, deine aktuellen Gewohnheiten besser zu verstehen und einzuordnen. Es zeigt dir, welche Faktoren deinen Alltag prägen und welche Anforderungen deine individuelle Meal Prep Routine erfüllen sollte.
+
+Mit diesen Erkenntnissen legst du die Grundlage für mehr Struktur, Entlastung und Klarheit im Alltag.
 
 Dein Meal Prep Profil:
-${resultPageUrl}`;
+${resultPageUrl}
+
+Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.
+
+Viele Grüße,
+Samia vom Happy Tummy Club`;
 
     await sendBrevoEmail({
       toEmail: parsed.email,
@@ -228,8 +264,16 @@ ${resultPageUrl}`;
       textContent,
     });
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({
+      success: true,
+      message: "Ergebnis verarbeitet und Mail gesendet.",
+    });
   } catch (error) {
-    return res.status(500).json({ success: false });
+    console.error("Fehler in /api/process-result:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 }
