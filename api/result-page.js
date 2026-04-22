@@ -67,7 +67,9 @@ export default async function handler(req, res) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dein persönliches Meal Prep Profil</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
   body {
     margin: 0;
@@ -103,7 +105,7 @@ export default async function handler(req, res) {
   }
 
   h2 {
-    color: #3dadff;
+    color: #f05808;
     margin-top: 40px;
     margin-bottom: 14px;
     font-size: 24px;
@@ -132,7 +134,7 @@ export default async function handler(req, res) {
     text-align: left;
     font-size: 18px;
     font-weight: 600;
-    color: #3dadff;
+    color: #f05808;
     padding: 16px 0;
     cursor: pointer;
     font-family: 'Montserrat', Arial, Helvetica, sans-serif;
@@ -175,16 +177,12 @@ export default async function handler(req, res) {
   .cta-button {
     display: inline-block;
     background-color: #2d5146;
-    color: #3dadff;
+    color: #ffffff;
     padding: 14px 26px;
     border-radius: 10px;
     font-weight: 600;
     text-decoration: none;
     font-size: 16px;
-  }
-
-  .cta-button:hover {
-    opacity: 0.9;
   }
 
   .footer {
@@ -196,6 +194,7 @@ export default async function handler(req, res) {
   }
 </style>
 </head>
+
 <body>
   <div class="wrapper">
     <div class="card">
@@ -232,15 +231,7 @@ export default async function handler(req, res) {
           <div class="accordion-item">
             <button class="accordion-button">Was deine Meal Prep Routine leisten sollte</button>
             <div class="accordion-content">
-              <p>
-                Aus deiner Auswertung wird deutlich, dass eine passende Meal Prep Routine bestimmte Anforderungen erfüllen sollte, damit sie dich im Alltag wirklich unterstützt. Besonders wichtig ist dabei:
-              </p>
-              <ul>
-                ${requirementsHtml}
-              </ul>
-              <p>
-                Genau daran zeigt sich, wie wichtig eine Herangehensweise ist, die wirklich zu deinen Rahmenbedingungen passt.
-              </p>
+              <ul>${requirementsHtml}</ul>
             </div>
           </div>
 
@@ -254,22 +245,12 @@ export default async function handler(req, res) {
 
         <h2>Deine Meal Prep Routine</h2>
 
-        <p>
-          Du möchtest tiefer in deine Ergebnisse einsteigen und herausfinden, wie du deine ganz persönliche Meal Prep Routine entwickeln kannst? Gerne! Buche dir ein kostenloses Orientierungsgespräch und lass uns gemeinsam auf deine aktuelle Situation und deine Wünsche schauen.
-        </p>
-
         <div class="cta-section">
           <a class="cta-button" href="${escapeHtml(calendly)}" target="_blank">
             Kostenloses Orientierungsgespräch buchen
           </a>
         </div>
 
-        <p>Ich wünsche dir viel Spaß beim Entdecken deiner Auswertung.</p>
-
-        <p>
-          Viele Grüße,<br>
-          Samia vom Happy Tummy Club
-        </p>
       </div>
 
       <div class="footer">
@@ -287,6 +268,7 @@ export default async function handler(req, res) {
     });
   });
 </script>
+
 </body>
 </html>
 `;
@@ -295,7 +277,6 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     res.status(200).send(html);
   } catch (error) {
-    console.error("Fehler in /api/result-page:", error);
-    res.status(500).send("Fehler beim Laden der Ergebnis-Seite.");
+    res.status(500).send("Fehler beim Laden.");
   }
 }
